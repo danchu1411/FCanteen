@@ -16,6 +16,8 @@ public class OrderTicket
 
     public DateTime CreatedAt { get; set; }
 
+    public string BranchCode { get; set; } = "BR01";
+
     public string Status { get; set; } = "Waiting";
 
     public ICollection<TicketLine> TicketLines { get; set; }

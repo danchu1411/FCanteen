@@ -14,6 +14,10 @@ public class FCanteenContext(
 
     public DbSet<DeviceLog> DeviceLogs => Set<DeviceLog>();
 
+    public DbSet<Ingredient> Ingredients => Set<Ingredient>();
+
+    public DbSet<DailySettlement> DailySettlements => Set<DailySettlement>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -22,6 +26,8 @@ public class FCanteenContext(
         ConfigureOrderTicket(modelBuilder);
         ConfigureTicketLine(modelBuilder);
         ConfigureDeviceLog(modelBuilder);
+        ConfigureIngredient(modelBuilder);
+        ConfigureDailySettlement(modelBuilder);
 
         SeedMenuItems(modelBuilder);
     }
@@ -55,12 +61,58 @@ public class FCanteenContext(
                 .IsRequired()
                 .HasMaxLength(50);
 
+            entity.Property(x => x.BranchCode)
+                .IsRequired()
+                .HasMaxLength(20)
+                .HasDefaultValue("BR01");
+
             entity.Property(x => x.TotalAmount)
                 .HasPrecision(18, 2);
 
             entity.Property(x => x.Status)
                 .IsRequired()
                 .HasMaxLength(50);
+        });
+    }
+
+    private static void ConfigureIngredient(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Ingredient>(entity =>
+        {
+            entity.HasKey(x => x.IngredientId);
+
+            entity.Property(x => x.Name)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            entity.Property(x => x.Unit)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.Property(x => x.StockQuantity)
+                .HasPrecision(18, 2);
+
+            entity.Property(x => x.AlertThreshold)
+                .HasPrecision(18, 2);
+        });
+    }
+
+    private static void ConfigureDailySettlement(
+    ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<DailySettlement>(entity =>
+        {
+            entity.HasKey(x => x.DailySettlementId);
+
+            entity.Property(x => x.Date)
+                .HasColumnType("date");
+
+            entity.Property(x => x.BranchCode)
+                .IsRequired()
+                .HasMaxLength(20);
+
+            entity.Property(x => x.TotalRevenue)
+                .HasPrecision(18, 2);
         });
     }
 
