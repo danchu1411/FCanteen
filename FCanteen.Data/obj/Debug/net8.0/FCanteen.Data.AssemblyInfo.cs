@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FCanteen.Data")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+51c4ecb068a3e7c3a62c9ef4d48d034ff2abbf9d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+94060e0510999cc6684c3e7db738de2066465fe1")]
 [assembly: System.Reflection.AssemblyProductAttribute("FCanteen.Data")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FCanteen.Data")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

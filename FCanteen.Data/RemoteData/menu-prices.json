@@ -1,0 +1,27 @@
+[
+  {
+    "menuItemId": 1,
+    "name": "Cơm gà",
+    "price": 38000
+  },
+  {
+    "menuItemId": 2,
+    "name": "Cơm sườn",
+    "price": 42000
+  },
+  {
+    "menuItemId": 3,
+    "name": "Cơm bò xào",
+    "price": 47000
+  },
+  {
+    "menuItemId": 4,
+    "name": "Mì xào bò",
+    "price": 40000
+  },
+  {
+    "menuItemId": 5,
+    "name": "Mì xào trứng",
+    "price": 32000
+  }
+]

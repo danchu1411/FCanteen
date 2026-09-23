@@ -29,6 +29,11 @@ internal class Program
                 .GetValue<int>(
                     "Networking:TcpPort");
 
+        var udpPort =
+            configuration
+                .GetValue<int>(
+                    "Networking:UdpPort");
+
         using var cancellationTokenSource =
             new CancellationTokenSource();
 
@@ -45,7 +50,20 @@ internal class Program
                 connectionString,
                 tcpPort);
 
-        await server.RunAsync(
-            cancellationTokenSource.Token);
+        var commandService =
+            new KitchenCommandService(
+                connectionString,
+                udpPort);
+
+        var tcpTask =
+            server.RunAsync(
+                cancellationTokenSource.Token);
+
+        var commandTask =
+            commandService.RunAsync();
+
+        await Task.WhenAll(
+            tcpTask,
+            commandTask);
     }
 }

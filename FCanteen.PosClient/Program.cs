@@ -6,6 +6,7 @@ using FCanteen.Data.Contracts;
 using FCanteen.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using System.Collections.Concurrent;
 
 namespace FCanteen.PosClient;
 
@@ -54,6 +55,29 @@ internal class Program
                 .GetValue<int>(
                     "Networking:TcpPort");
 
+        var udpPort =
+            configuration
+                .GetValue<int>(
+                    "Networking:UdpPort");
+
+        var availability =
+            new ConcurrentDictionary<int, bool>();
+
+        using var cancellationTokenSource =
+            new CancellationTokenSource();
+
+        var udpListener =
+            new StockUdpListener(
+                udpPort,
+                availability);
+
+        var udpTask =
+            Task.Run(
+                () =>
+                    udpListener.RunAsync(
+                        cancellationTokenSource.Token));
+
+
         Console.Title =
             $"FCanteen POS - {counterName}";
 
@@ -80,7 +104,8 @@ internal class Program
                     counterName,
                     connectionString,
                     serverHost,
-                    tcpPort);
+                    tcpPort,
+                    availability);
             }
             catch (Exception ex)
             {
@@ -109,7 +134,15 @@ internal class Program
             Console.WriteLine(
                 $"FCANTEEN POS - {counterName}");
         }
+        cancellationTokenSource.Cancel();
 
+        try
+        {
+            await udpTask;
+        }
+        catch (OperationCanceledException)
+        {
+        }
         Console.WriteLine(
             "POS stopped.");
     }
@@ -118,7 +151,9 @@ internal class Program
         string counterName,
         string connectionString,
         string serverHost,
-        int tcpPort)
+        int tcpPort,
+        ConcurrentDictionary<int, bool>
+            availability)
     {
         await using var db =
             CreateDbContext(
@@ -131,6 +166,13 @@ internal class Program
                 .OrderBy(x => x.MenuItemId)
                 .ToListAsync();
 
+        foreach (var item in menuItems)
+        {
+            availability.TryAdd(
+                item.MenuItemId,
+                item.IsAvailable);
+        }
+
         if (menuItems.Count == 0)
         {
             Console.WriteLine(
@@ -139,7 +181,9 @@ internal class Program
             return;
         }
 
-        DisplayMenu(menuItems);
+        DisplayMenu(
+            menuItems,
+            availability);
 
         var requestLines =
             new List<OrderLineRequest>();
@@ -186,11 +230,18 @@ internal class Program
             var selectedItem =
                 menuItems[menuNumber - 1];
 
-            if (!selectedItem.IsAvailable)
+            var isAvailable =
+                availability.TryGetValue(
+                    selectedItem.MenuItemId,
+                    out var currentAvailability)
+                    ? currentAvailability
+                    : selectedItem.IsAvailable;
+
+            if (!isAvailable)
             {
                 Console.WriteLine(
                     $"{selectedItem.Name} " +
-                    "is currently unavailable.");
+                    "is currently OUT OF STOCK.");
 
                 continue;
             }
@@ -307,7 +358,9 @@ internal class Program
     }
 
     private static void DisplayMenu(
-        List<MenuItem> menuItems)
+        List<MenuItem> menuItems,
+        ConcurrentDictionary<int, bool>
+            availability)
     {
         Console.WriteLine();
 
@@ -331,8 +384,15 @@ internal class Program
             var item =
                 menuItems[index];
 
+            var currentAvailability =
+                availability.TryGetValue(
+                    item.MenuItemId,
+                    out var value)
+                    ? value
+                    : item.IsAvailable;
+
             var status =
-                item.IsAvailable
+                currentAvailability
                     ? "Available"
                     : "OUT";
 
