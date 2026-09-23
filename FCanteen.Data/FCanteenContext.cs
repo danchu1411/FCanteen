@@ -17,7 +17,12 @@ public class FCanteenContext(
     public DbSet<Ingredient> Ingredients => Set<Ingredient>();
 
     public DbSet<DailySettlement> DailySettlements => Set<DailySettlement>();
+
     public DbSet<Staff> Staffs => Set<Staff>();
+
+    public DbSet<DiscountPolicyLog>
+    DiscountPolicyLogs =>
+        Set<DiscountPolicyLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,6 +35,7 @@ public class FCanteenContext(
         ConfigureIngredient(modelBuilder);
         ConfigureDailySettlement(modelBuilder);
         ConfigureStaff(modelBuilder);
+        ConfigureDiscountPolicyLog(modelBuilder);
 
         SeedMenuItems(modelBuilder);
     }
@@ -75,6 +81,39 @@ public class FCanteenContext(
                 .IsRequired()
                 .HasMaxLength(50);
         });
+    }
+
+    private static void ConfigureDiscountPolicyLog(
+        ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<DiscountPolicyLog>(
+            entity =>
+            {
+                entity.HasKey(
+                    x => x.DiscountPolicyLogId);
+
+                entity.Property(
+                        x => x.PolicyName)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(
+                        x => x.CustomerType)
+                    .IsRequired()
+                    .HasMaxLength(30);
+
+                entity.Property(
+                        x => x.AmountBefore)
+                    .HasPrecision(18, 2);
+
+                entity.Property(
+                        x => x.DiscountAmount)
+                    .HasPrecision(18, 2);
+
+                entity.Property(
+                        x => x.AmountAfter)
+                    .HasPrecision(18, 2);
+            });
     }
 
     private static void ConfigureIngredient(ModelBuilder modelBuilder)

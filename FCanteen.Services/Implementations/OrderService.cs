@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 using FCanteen.Data.Entities;
 using FCanteen.Repositories.Interfaces;
+using FCanteen.Services.Discounts;
 using FCanteen.Services.Interfaces;
+using FCanteen.Services.Models.Discounts;
 
 namespace FCanteen.Services.Implementations;
 
@@ -19,15 +21,32 @@ public class OrderService
     private readonly IMenuItemRepository
         _menuItemRepository;
 
+    private readonly IReadOnlyList<IDiscountPolicy>
+        _discountPolicies;
+
+    private readonly IDiscountPolicyLogRepository
+        _discountPolicyLogRepository;
+
     public OrderService(
         IOrderRepository orderRepository,
-        IMenuItemRepository menuItemRepository)
+        IMenuItemRepository menuItemRepository,
+        IEnumerable<IDiscountPolicy> discountPolicies,
+        IDiscountPolicyLogRepository
+        discountPolicyLogRepository)
     {
         _orderRepository =
             orderRepository;
 
         _menuItemRepository =
             menuItemRepository;
+
+        _discountPolicies =
+            discountPolicies
+                .OrderBy(x => x.Priority)
+                .ToArray();
+
+        _discountPolicyLogRepository =
+            discountPolicyLogRepository;
     }
 
     public Task<OrderTicket?>
@@ -50,5 +69,156 @@ public class OrderService
         return _menuItemRepository
             .GetAvailableAsync(
                 cancellationToken);
+    }
+
+    public async Task<DiscountCalculationResult>
+        CalculateDiscountAsync(
+            DiscountRequest request,
+            CancellationToken cancellationToken =
+                default)
+    {
+        if (request.Items.Count == 0)
+        {
+            return new DiscountCalculationResult
+            {
+                Subtotal = 0,
+                TotalDiscount = 0,
+                FinalTotal = 0
+            };
+        }
+
+        var subtotal =
+            request.Subtotal;
+
+        var context =
+            new DiscountContext
+            {
+                CustomerType =
+                    request.CustomerType,
+
+                OrderTime =
+                    request.OrderTime,
+
+                Items =
+                    request.Items,
+
+                OriginalSubtotal =
+                    subtotal,
+
+                CurrentTotal =
+                    subtotal
+            };
+
+        var appliedPolicies =
+            new List<AppliedDiscountResult>();
+
+        var logs =
+            new List<DiscountPolicyLog>();
+
+        foreach (var policy
+                 in _discountPolicies)
+        {
+            if (!policy.CanApply(
+                    context))
+            {
+                continue;
+            }
+
+            var amountBefore =
+                context.CurrentTotal;
+
+            var calculatedDiscount =
+                policy.CalculateDiscount(
+                    context);
+
+            /*
+             * Policy không được làm hóa đơn âm.
+             */
+            var discountAmount =
+                Math.Clamp(
+                    calculatedDiscount,
+                    0m,
+                    amountBefore);
+
+            if (discountAmount <= 0)
+            {
+                continue;
+            }
+
+            context.CurrentTotal -=
+                discountAmount;
+
+            appliedPolicies.Add(
+                new AppliedDiscountResult
+                {
+                    PolicyName =
+                        policy.Name,
+
+                    Priority =
+                        policy.Priority,
+
+                    AmountBefore =
+                        amountBefore,
+
+                    DiscountAmount =
+                        discountAmount,
+
+                    AmountAfter =
+                        context.CurrentTotal
+                });
+
+            logs.Add(
+                new DiscountPolicyLog
+                {
+                    PolicyName =
+                        policy.Name,
+
+                    Priority =
+                        policy.Priority,
+
+                    CustomerType =
+                        request.CustomerType
+                            .ToString(),
+
+                    OrderTime =
+                        request.OrderTime,
+
+                    AmountBefore =
+                        amountBefore,
+
+                    DiscountAmount =
+                        discountAmount,
+
+                    AmountAfter =
+                        context.CurrentTotal,
+
+                    AppliedAt =
+                        DateTime.Now
+                });
+        }
+
+        if (logs.Count > 0)
+        {
+            await _discountPolicyLogRepository
+                .AddRangeAsync(
+                    logs,
+                    cancellationToken);
+        }
+
+        return new DiscountCalculationResult
+        {
+            Subtotal =
+                subtotal,
+
+            TotalDiscount =
+                subtotal -
+                context.CurrentTotal,
+
+            FinalTotal =
+                context.CurrentTotal,
+
+            AppliedPolicies =
+                appliedPolicies
+        };
     }
 }

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using FCanteen.Data.Entities;
+using FCanteen.Services.Models.Discounts;
 
 namespace FCanteen.Services.Interfaces;
 
@@ -18,6 +19,12 @@ public interface IOrderService
 
     Task<IReadOnlyList<MenuItem>>
         GetAvailableMenuAsync(
+            CancellationToken cancellationToken =
+                default);
+
+    Task<DiscountCalculationResult>
+        CalculateDiscountAsync(
+            DiscountRequest request,
             CancellationToken cancellationToken =
                 default);
 }

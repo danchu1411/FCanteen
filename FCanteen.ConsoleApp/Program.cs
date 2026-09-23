@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using FCanteen.Services.Discounts;
+using FCanteen.Services.Discounts.Policies;
 
 var builder =
     Host.CreateApplicationBuilder(args);
@@ -58,6 +60,28 @@ builder.Services.AddScoped
 builder.Services.AddScoped
     <IInventoryService,
      InventoryService>();
+
+builder.Services.AddScoped
+    <IDiscountPolicyLogRepository,
+     DiscountPolicyLogRepository>();
+
+/*
+ * Discount Policies.
+ *
+ * Có thể đăng ký nhiều implementation
+ * cho cùng một interface.
+ */
+builder.Services.AddScoped
+    <IDiscountPolicy,
+     StudentDiscountPolicy>();
+
+builder.Services.AddScoped
+    <IDiscountPolicy,
+     StaffDiscountPolicy>();
+
+builder.Services.AddScoped
+    <IDiscountPolicy,
+     ComboDiscountPolicy>();
 
 /*
  * Console UI.

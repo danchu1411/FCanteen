@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FCanteen.Services.Models.Discounts;
 
 using FCanteen.Services.Interfaces;
 
@@ -64,6 +65,9 @@ public class ConsoleApplication
                 "4. Find order by ID");
 
             Console.WriteLine(
+                 "5. YC2 - Test discount policies");
+
+            Console.WriteLine(
                 "0. Exit");
 
             Console.WriteLine();
@@ -95,6 +99,11 @@ public class ConsoleApplication
 
                 case "4":
                     await ShowOrderAsync(
+                        cancellationToken);
+                    break;
+
+                case "5":
+                    await TestDiscountPoliciesAsync(
                         cancellationToken);
                     break;
 
@@ -278,5 +287,189 @@ public class ConsoleApplication
         Console.WriteLine(
             $"Time   : " +
             $"{order.CreatedAt:yyyy-MM-dd HH:mm:ss}");
+    }
+
+    private async Task TestDiscountPoliciesAsync(
+        CancellationToken cancellationToken)
+    {
+        Console.WriteLine(
+            "========== DISCOUNT POLICY DEMO ==========");
+
+        Console.WriteLine();
+
+        Console.WriteLine(
+            "Customer type:");
+
+        Console.WriteLine(
+            "1. Student");
+
+        Console.WriteLine(
+            "2. Lecturer");
+
+        Console.WriteLine(
+            "3. Staff");
+
+        Console.WriteLine(
+            "4. Regular");
+
+        Console.Write(
+            "Choose: ");
+
+        var customerType =
+            Console.ReadLine() switch
+            {
+                "1" =>
+                    CustomerType.Student,
+
+                "2" =>
+                    CustomerType.Lecturer,
+
+                "3" =>
+                    CustomerType.Staff,
+
+                _ =>
+                    CustomerType.Regular
+            };
+
+        Console.Write(
+            "Include drink for combo? (Y/N): ");
+
+        var includeDrink =
+            string.Equals(
+                Console.ReadLine(),
+                "Y",
+                StringComparison.OrdinalIgnoreCase);
+
+        Console.Write(
+            "Order hour 0-23 " +
+            "(Enter = current hour): ");
+
+        var hourInput =
+            Console.ReadLine();
+
+        var orderTime =
+            DateTime.Now;
+
+        if (int.TryParse(
+                hourInput,
+                out var hour) &&
+            hour is >= 0 and <= 23)
+        {
+            orderTime =
+                DateTime.Today
+                    .AddHours(hour);
+        }
+
+        var items =
+            new List<DiscountOrderItem>
+            {
+            new()
+            {
+                Name =
+                    "Main Dish Demo",
+
+                UnitPrice =
+                    70_000m,
+
+                Quantity =
+                    1,
+
+                Category =
+                    DiscountItemCategory
+                        .MainDish
+            }
+            };
+
+        if (includeDrink)
+        {
+            items.Add(
+                new DiscountOrderItem
+                {
+                    Name =
+                        "Drink Demo",
+
+                    UnitPrice =
+                        30_000m,
+
+                    Quantity =
+                        1,
+
+                    Category =
+                        DiscountItemCategory
+                            .Drink
+                });
+        }
+
+        var request =
+            new DiscountRequest
+            {
+                CustomerType =
+                    customerType,
+
+                OrderTime =
+                    orderTime,
+
+                Items =
+                    items
+            };
+
+        var result =
+            await _orderService
+                .CalculateDiscountAsync(
+                    request,
+                    cancellationToken);
+
+        Console.WriteLine();
+        Console.WriteLine(
+            $"Customer       : " +
+            $"{customerType}");
+
+        Console.WriteLine(
+            $"Order time     : " +
+            $"{orderTime:HH:mm}");
+
+        Console.WriteLine(
+            $"Subtotal       : " +
+            $"{result.Subtotal:N0} VND");
+
+        Console.WriteLine();
+
+        Console.WriteLine(
+            "Applied policies:");
+
+        if (result.AppliedPolicies.Count == 0)
+        {
+            Console.WriteLine(
+                "None.");
+        }
+        else
+        {
+            foreach (var policy
+                     in result.AppliedPolicies)
+            {
+                Console.WriteLine(
+                    $"Priority " +
+                    $"{policy.Priority,3} | " +
+                    $"{policy.PolicyName,-30} | " +
+                    $"{policy.AmountBefore,10:N0}" +
+                    $" -> -" +
+                    $"{policy.DiscountAmount,8:N0}" +
+                    $" -> " +
+                    $"{policy.AmountAfter,10:N0}");
+            }
+        }
+
+        Console.WriteLine();
+
+        Console.WriteLine(
+            $"Total discount : " +
+            $"{result.TotalDiscount:N0} VND");
+
+        Console.WriteLine(
+            $"Final total    : " +
+            $"{result.FinalTotal:N0} VND");
+
+        Console.WriteLine(
+            "==========================================");
     }
 }
