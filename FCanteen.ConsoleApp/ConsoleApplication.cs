@@ -5,6 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using FCanteen.Services.Models.Discounts;
 
+using FCanteen.Services.Lifetimes;
+using Microsoft.Extensions.DependencyInjection;
+using FCanteen.ConsoleApp.Models;
+
 using FCanteen.Services.Interfaces;
 
 namespace FCanteen.ConsoleApp;
@@ -20,10 +24,19 @@ public class ConsoleApplication
     private readonly IInventoryService
         _inventoryService;
 
+    private readonly IServiceScopeFactory
+        _scopeFactory;
+
+    private readonly CaptiveDependencyDemoService
+        _captiveDependencyDemoService;
+
     public ConsoleApplication(
         IOrderService orderService,
         IReportService reportService,
-        IInventoryService inventoryService)
+        IInventoryService inventoryService,
+        IServiceScopeFactory scopeFactory,
+        CaptiveDependencyDemoService
+            captiveDependencyDemoService)
     {
         _orderService =
             orderService;
@@ -33,6 +46,12 @@ public class ConsoleApplication
 
         _inventoryService =
             inventoryService;
+
+        _scopeFactory =
+            scopeFactory;
+
+        _captiveDependencyDemoService =
+            captiveDependencyDemoService;
     }
 
     public async Task RunAsync(
@@ -66,6 +85,12 @@ public class ConsoleApplication
 
             Console.WriteLine(
                  "5. YC2 - Test discount policies");
+
+            Console.WriteLine(
+                "6. YC4 - Service lifetime demo");
+
+            Console.WriteLine(
+                "7. YC4 - Test DbContext lifetime");
 
             Console.WriteLine(
                 "0. Exit");
@@ -104,6 +129,15 @@ public class ConsoleApplication
 
                 case "5":
                     await TestDiscountPoliciesAsync(
+                        cancellationToken);
+                    break;
+
+                case "6":
+                    RunLifetimeDemo();
+                    break;
+
+                case "7":
+                    await TestDbContextLifetimeAsync(
                         cancellationToken);
                     break;
 
@@ -468,6 +502,278 @@ public class ConsoleApplication
         Console.WriteLine(
             $"Final total    : " +
             $"{result.FinalTotal:N0} VND");
+
+        Console.WriteLine(
+            "==========================================");
+    }
+
+    private void RunLifetimeDemo()
+    {
+        Console.WriteLine();
+        Console.WriteLine(
+            "==============================================");
+
+        Console.WriteLine(
+            " YC4 - DEPENDENCY INJECTION SERVICE LIFETIMES");
+
+        Console.WriteLine(
+            "==============================================");
+
+        /*
+         * Scope 1
+         */
+        using var scope1 =
+            _scopeFactory.CreateScope();
+
+        var scope1Result =
+            ResolveLifetimeServices(
+                "SCOPE 1",
+                scope1.ServiceProvider);
+
+        /*
+         * Scope 2
+         */
+        using var scope2 =
+            _scopeFactory.CreateScope();
+
+        var scope2Result =
+            ResolveLifetimeServices(
+                "SCOPE 2",
+                scope2.ServiceProvider);
+
+        PrintLifetimeComparison(
+            scope1Result,
+            scope2Result);
+    }
+
+    private static void PrintLifetimeComparison(
+    LifetimeResult scope1,
+    LifetimeResult scope2)
+    {
+        Console.WriteLine();
+        Console.WriteLine(
+            "================ FINAL COMPARISON ================");
+
+        Console.WriteLine();
+
+        Console.WriteLine(
+            "Transient:");
+
+        Console.WriteLine(
+            $"  Scope 1 #1 = {scope1.Transient1}");
+
+        Console.WriteLine(
+            $"  Scope 1 #2 = {scope1.Transient2}");
+
+        Console.WriteLine(
+            $"  Scope 2 #1 = {scope2.Transient1}");
+
+        Console.WriteLine(
+            $"  Scope 2 #2 = {scope2.Transient2}");
+
+        Console.WriteLine(
+            "  Expected: ALL DIFFERENT");
+
+        Console.WriteLine();
+
+        Console.WriteLine(
+            "Scoped:");
+
+        Console.WriteLine(
+            $"  Scope 1 #1 = {scope1.Scoped1}");
+
+        Console.WriteLine(
+            $"  Scope 1 #2 = {scope1.Scoped2}");
+
+        Console.WriteLine(
+            $"  Scope 2 #1 = {scope2.Scoped1}");
+
+        Console.WriteLine(
+            $"  Scope 2 #2 = {scope2.Scoped2}");
+
+        Console.WriteLine(
+            "  Expected:");
+
+        Console.WriteLine(
+            "  - Same inside Scope 1");
+
+        Console.WriteLine(
+            "  - Same inside Scope 2");
+
+        Console.WriteLine(
+            "  - Different between scopes");
+
+        Console.WriteLine();
+
+        Console.WriteLine(
+            "Singleton:");
+
+        Console.WriteLine(
+            $"  Scope 1 #1 = {scope1.Singleton1}");
+
+        Console.WriteLine(
+            $"  Scope 1 #2 = {scope1.Singleton2}");
+
+        Console.WriteLine(
+            $"  Scope 2 #1 = {scope2.Singleton1}");
+
+        Console.WriteLine(
+            $"  Scope 2 #2 = {scope2.Singleton2}");
+
+        Console.WriteLine(
+            "  Expected: ALL THE SAME");
+
+        Console.WriteLine();
+
+        Console.WriteLine(
+            "==================================================");
+    }
+
+    private static LifetimeResult
+    ResolveLifetimeServices(
+        string scopeName,
+        IServiceProvider serviceProvider)
+    {
+        /*
+         * TRANSIENT:
+         * resolve hai lần.
+         */
+        var transient1 =
+            serviceProvider
+                .GetRequiredService
+                    <ITransientLifetimeService>();
+
+        var transient2 =
+            serviceProvider
+                .GetRequiredService
+                    <ITransientLifetimeService>();
+
+        /*
+         * SCOPED:
+         * resolve hai lần.
+         */
+        var scoped1 =
+            serviceProvider
+                .GetRequiredService
+                    <IScopedLifetimeService>();
+
+        var scoped2 =
+            serviceProvider
+                .GetRequiredService
+                    <IScopedLifetimeService>();
+
+        /*
+         * SINGLETON:
+         * resolve hai lần.
+         */
+        var singleton1 =
+            serviceProvider
+                .GetRequiredService
+                    <ISingletonLifetimeService>();
+
+        var singleton2 =
+            serviceProvider
+                .GetRequiredService
+                    <ISingletonLifetimeService>();
+
+        Console.WriteLine();
+        Console.WriteLine(
+            $"================ {scopeName} ================");
+
+        Console.WriteLine(
+            "TRANSIENT");
+
+        Console.WriteLine(
+            $"  Resolve #1: {transient1.InstanceId}");
+
+        Console.WriteLine(
+            $"  Resolve #2: {transient2.InstanceId}");
+
+        Console.WriteLine(
+            $"  Same instance: " +
+            $"{transient1.InstanceId == transient2.InstanceId}");
+
+        Console.WriteLine();
+
+        Console.WriteLine(
+            "SCOPED");
+
+        Console.WriteLine(
+            $"  Resolve #1: {scoped1.InstanceId}");
+
+        Console.WriteLine(
+            $"  Resolve #2: {scoped2.InstanceId}");
+
+        Console.WriteLine(
+            $"  Same instance: " +
+            $"{scoped1.InstanceId == scoped2.InstanceId}");
+
+        Console.WriteLine();
+
+        Console.WriteLine(
+            "SINGLETON");
+
+        Console.WriteLine(
+            $"  Resolve #1: {singleton1.InstanceId}");
+
+        Console.WriteLine(
+            $"  Resolve #2: {singleton2.InstanceId}");
+
+        Console.WriteLine(
+            $"  Same instance: " +
+            $"{singleton1.InstanceId == singleton2.InstanceId}");
+
+        return new LifetimeResult
+        {
+            ScopeName =
+                scopeName,
+
+            Transient1 =
+                transient1.InstanceId,
+
+            Transient2 =
+                transient2.InstanceId,
+
+            Scoped1 =
+                scoped1.InstanceId,
+
+            Scoped2 =
+                scoped2.InstanceId,
+
+            Singleton1 =
+                singleton1.InstanceId,
+
+            Singleton2 =
+                singleton2.InstanceId
+        };
+    }
+    private async Task TestDbContextLifetimeAsync(
+        CancellationToken cancellationToken)
+    {
+        Console.WriteLine();
+        Console.WriteLine(
+            "====== CAPTIVE DEPENDENCY FIXED TEST ======");
+
+        Console.WriteLine(
+            $"Service InstanceId: " +
+            $"{_captiveDependencyDemoService.InstanceId}");
+
+        var menuCount =
+            await _captiveDependencyDemoService
+                .GetMenuItemCountAsync(
+                    cancellationToken);
+
+        Console.WriteLine(
+            $"Menu item count: {menuCount:N0}");
+
+        Console.WriteLine(
+            "Service lifetime: SCOPED");
+
+        Console.WriteLine(
+            "DbContext lifetime: SCOPED");
+
+        Console.WriteLine(
+            "Result: VALID");
 
         Console.WriteLine(
             "==========================================");

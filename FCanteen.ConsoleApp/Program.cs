@@ -12,6 +12,7 @@ using FCanteen.Services.Discounts;
 using FCanteen.Services.Discounts.Policies;
 using FCanteen.Services.Notifications;
 using FCanteen.Services.Notifications.Implementations;
+using FCanteen.Services.Lifetimes;
 
 var builder =
     Host.CreateApplicationBuilder(args);
@@ -88,6 +89,25 @@ builder.Services.AddScoped
 builder.Services.AddScoped
     <IDiscountPolicy,
      ComboDiscountPolicy>();
+
+/*
+ * YC4 - Service lifetime demonstrations.
+ */
+
+builder.Services.AddTransient
+    <ITransientLifetimeService,
+     TransientLifetimeService>();
+
+builder.Services.AddScoped
+    <IScopedLifetimeService,
+     ScopedLifetimeService>();
+
+builder.Services.AddSingleton
+    <ISingletonLifetimeService,
+     SingletonLifetimeService>();
+
+builder.Services.AddScoped
+    <CaptiveDependencyDemoService>();
 
 /*
  * Console UI.
