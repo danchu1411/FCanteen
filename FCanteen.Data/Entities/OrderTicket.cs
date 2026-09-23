@@ -19,5 +19,5 @@ public class OrderTicket
     public string Status { get; set; } = "Waiting";
 
     public ICollection<TicketLine> TicketLines { get; set; }
-        = new List<TicketLine>();
+        = [];
 }

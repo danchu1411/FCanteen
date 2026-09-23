@@ -3,14 +3,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FCanteen.Data;
 
-public class FCanteenContext : DbContext
+public class FCanteenContext(
+    DbContextOptions<FCanteenContext> options) : DbContext(options)
 {
-    public FCanteenContext(
-        DbContextOptions<FCanteenContext> options)
-        : base(options)
-    {
-    }
-
     public DbSet<MenuItem> MenuItems => Set<MenuItem>();
 
     public DbSet<OrderTicket> OrderTickets => Set<OrderTicket>();

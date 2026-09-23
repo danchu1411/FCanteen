@@ -19,5 +19,5 @@ public class MenuItem
     public bool IsAvailable { get; set; } = true;
 
     public ICollection<TicketLine> TicketLines { get; set; }
-        = new List<TicketLine>();
+        = [];
 }
