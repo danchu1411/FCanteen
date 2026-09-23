@@ -10,6 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using FCanteen.Services.Discounts;
 using FCanteen.Services.Discounts.Policies;
+using FCanteen.Services.Notifications;
+using FCanteen.Services.Notifications.Implementations;
 
 var builder =
     Host.CreateApplicationBuilder(args);
@@ -64,6 +66,10 @@ builder.Services.AddScoped
 builder.Services.AddScoped
     <IDiscountPolicyLogRepository,
      DiscountPolicyLogRepository>();
+
+builder.Services.AddScoped
+    <INotificationService,
+     ConsoleNotificationService>();
 
 /*
  * Discount Policies.

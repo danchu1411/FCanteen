@@ -9,6 +9,7 @@ using FCanteen.Repositories.Interfaces;
 using FCanteen.Services.Discounts;
 using FCanteen.Services.Interfaces;
 using FCanteen.Services.Models.Discounts;
+using FCanteen.Services.Notifications;
 
 namespace FCanteen.Services.Implementations;
 
@@ -27,12 +28,16 @@ public class OrderService
     private readonly IDiscountPolicyLogRepository
         _discountPolicyLogRepository;
 
+    private readonly INotificationService
+        _notificationService;
+
     public OrderService(
         IOrderRepository orderRepository,
         IMenuItemRepository menuItemRepository,
         IEnumerable<IDiscountPolicy> discountPolicies,
         IDiscountPolicyLogRepository
-        discountPolicyLogRepository)
+            discountPolicyLogRepository,
+        INotificationService notificationService)
     {
         _orderRepository =
             orderRepository;
@@ -42,11 +47,15 @@ public class OrderService
 
         _discountPolicies =
             discountPolicies
-                .OrderBy(x => x.Priority)
+                .OrderBy(
+                    x => x.Priority)
                 .ToArray();
 
         _discountPolicyLogRepository =
             discountPolicyLogRepository;
+
+        _notificationService =
+            notificationService;
     }
 
     public Task<OrderTicket?>
@@ -205,7 +214,8 @@ public class OrderService
                     cancellationToken);
         }
 
-        return new DiscountCalculationResult
+        var result =
+        new DiscountCalculationResult
         {
             Subtotal =
                 subtotal,
@@ -220,5 +230,16 @@ public class OrderService
             AppliedPolicies =
                 appliedPolicies
         };
+
+        await _notificationService
+            .SendAsync(
+                "FCanteen Order Discount Result",
+                $"Customer={request.CustomerType}; " +
+                $"Subtotal={result.Subtotal:N0} VND; " +
+                $"Discount={result.TotalDiscount:N0} VND; " +
+                $"Final={result.FinalTotal:N0} VND",
+                cancellationToken);
+
+        return result;
     }
 }
