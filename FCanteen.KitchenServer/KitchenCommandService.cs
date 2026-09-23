@@ -8,18 +8,31 @@ public class KitchenCommandService
 {
     private readonly string _connectionString;
     private readonly StockUdpBroadcaster _udpBroadcaster;
+    private readonly PriceSyncService
+       _priceSyncService;
+
+    private readonly string
+        _priceSyncUrl;
 
     public KitchenCommandService(
         string connectionString,
-        int udpPort)
+        int udpPort,
+        string priceSyncUrl)
     {
         _connectionString =
             connectionString;
+
+        _priceSyncUrl =
+            priceSyncUrl;
 
         _udpBroadcaster =
             new StockUdpBroadcaster(
                 connectionString,
                 udpPort);
+
+        _priceSyncService =
+            new PriceSyncService(
+                connectionString);
     }
 
     public async Task RunAsync()
@@ -34,6 +47,9 @@ public class KitchenCommandService
         Console.WriteLine(
             "  in <id>   - Mark item AVAILABLE");
 
+        Console.WriteLine(
+            "  sync      - Synchronize menu prices");
+
         while (true)
         {
             Console.WriteLine();
@@ -46,6 +62,17 @@ public class KitchenCommandService
             if (string.IsNullOrWhiteSpace(
                     input))
             {
+                continue;
+            }
+
+            if (input.Equals(
+                "sync",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                await _priceSyncService
+                    .SyncAsync(
+                        _priceSyncUrl);
+
                 continue;
             }
 

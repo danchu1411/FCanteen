@@ -34,6 +34,12 @@ internal class Program
                 .GetValue<int>(
                     "Networking:UdpPort");
 
+        var priceSyncUrl =
+            configuration[
+                "PriceSync:Url"]
+            ?? throw new InvalidOperationException(
+                "PriceSync:Url was not found.");
+
         using var cancellationTokenSource =
             new CancellationTokenSource();
 
@@ -53,7 +59,8 @@ internal class Program
         var commandService =
             new KitchenCommandService(
                 connectionString,
-                udpPort);
+                udpPort,
+                priceSyncUrl);
 
         var tcpTask =
             server.RunAsync(
