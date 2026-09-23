@@ -52,6 +52,9 @@ while (true)
         "4. YC4 - Async EF Core daily report");
 
     Console.WriteLine(
+        "5. YC5 - Race condition ingredient stock");
+
+    Console.WriteLine(
         "0. Exit");
 
     Console.WriteLine();
@@ -173,6 +176,16 @@ while (true)
                     Console.CancelKeyPress -=
                         handler;
                 }
+
+                break;
+            }
+
+        case "5":
+            {
+                var service =
+                    new RaceConditionService();
+
+                service.Run();
 
                 break;
             }
