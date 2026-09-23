@@ -46,6 +46,9 @@ while (true)
         "2. YC2 - Menu efficiency benchmark");
 
     Console.WriteLine(
+        "3. YC3 - LINQ vs PLINQ reports");
+
+    Console.WriteLine(
         "0. Exit");
 
     Console.WriteLine();
@@ -80,6 +83,18 @@ while (true)
 
                 await service
                     .RunBenchmarkAsync();
+
+                break;
+            }
+
+        case "3":
+            {
+                var service =
+                    new PlinqReportService(
+                        connectionString);
+
+                await service
+                    .RunReportsAsync();
 
                 break;
             }
