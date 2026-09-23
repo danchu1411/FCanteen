@@ -4,9 +4,23 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FCanteen.Data.Entities
+namespace FCanteen.Data.Entities;
+
+public class TicketLine
 {
-    internal class TicketLine
-    {
-    }
+    public int TicketLineId { get; set; }
+
+    public int OrderTicketId { get; set; }
+
+    public int MenuItemId { get; set; }
+
+    public int Quantity { get; set; }
+
+    public decimal UnitPrice { get; set; }
+
+    public string? Note { get; set; }
+
+    public OrderTicket OrderTicket { get; set; } = null!;
+
+    public MenuItem MenuItem { get; set; } = null!;
 }
