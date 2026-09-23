@@ -49,6 +49,9 @@ while (true)
         "3. YC3 - LINQ vs PLINQ reports");
 
     Console.WriteLine(
+        "4. YC4 - Async EF Core daily report");
+
+    Console.WriteLine(
         "0. Exit");
 
     Console.WriteLine();
@@ -95,6 +98,81 @@ while (true)
 
                 await service
                     .RunReportsAsync();
+
+                break;
+            }
+
+        case "4":
+            {
+                Console.Write(
+                    "Branch code " +
+                    "(default BR01): ");
+
+                var branchInput =
+                    Console.ReadLine();
+
+                var branchCode =
+                    string.IsNullOrWhiteSpace(
+                        branchInput)
+                        ? "BR01"
+                        : branchInput
+                            .Trim()
+                            .ToUpperInvariant();
+
+                Console.Write(
+                    "High-value threshold " +
+                    "(default 200000): ");
+
+                var thresholdInput =
+                    Console.ReadLine();
+
+                decimal threshold =
+                    200_000m;
+
+                if (!string.IsNullOrWhiteSpace(
+                        thresholdInput) &&
+                    decimal.TryParse(
+                        thresholdInput,
+                        out var parsedThreshold) &&
+                    parsedThreshold >= 0)
+                {
+                    threshold =
+                        parsedThreshold;
+                }
+
+                var service =
+                    new AsyncDailyReportService(
+                        connectionString);
+
+                /*
+                 * Cancellation token từ caller.
+                 */
+                using var userCts =
+                    new CancellationTokenSource();
+
+                ConsoleCancelEventHandler handler =
+                    (_, eventArgs) =>
+                    {
+                        eventArgs.Cancel = true;
+
+                        userCts.Cancel();
+                    };
+
+                Console.CancelKeyPress +=
+                    handler;
+
+                try
+                {
+                    await service.RunYc4Async(
+                        branchCode,
+                        threshold,
+                        userCts.Token);
+                }
+                finally
+                {
+                    Console.CancelKeyPress -=
+                        handler;
+                }
 
                 break;
             }
