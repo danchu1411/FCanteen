@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FCanteen.PosClient")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+355c140e858135af04080a3fa840545095019d7e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+acb47472dcf89bc05661152e67d7e19eadb8b1f0")]
 [assembly: System.Reflection.AssemblyProductAttribute("FCanteen.PosClient")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FCanteen.PosClient")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
