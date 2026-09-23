@@ -2,6 +2,7 @@
 using FCanteen.Data.Seeders;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using FCanteen.Analytics.Services;
 
 var configuration =
     new ConfigurationBuilder()
@@ -25,19 +26,77 @@ var options =
             connectionString)
         .Options;
 
-await using var db =
-    new FCanteenContext(options);
+while (true)
+{
+    Console.Clear();
 
-Console.WriteLine(
-    "FCanteen Lab02 - Large Data Seeder");
+    Console.WriteLine(
+        "======================================");
 
-Console.WriteLine();
+    Console.WriteLine(
+        "       FCANTEEN LAB 02 ANALYTICS");
 
-await Lab02DataSeeder.SeedAsync(db);
+    Console.WriteLine(
+        "======================================");
 
-Console.WriteLine();
+    Console.WriteLine(
+        "1. YC1 - Run large data seeder");
 
-Console.WriteLine(
-    "Press Enter to exit.");
+    Console.WriteLine(
+        "2. YC2 - Menu efficiency benchmark");
 
-Console.ReadLine();
+    Console.WriteLine(
+        "0. Exit");
+
+    Console.WriteLine();
+
+    Console.Write(
+        "Choose: ");
+
+    var choice =
+        Console.ReadLine();
+
+    Console.WriteLine();
+
+    switch (choice)
+    {
+        case "1":
+            {
+                await using var db =
+                    new FCanteenContext(
+                        options);
+
+                await Lab02DataSeeder
+                    .SeedAsync(db);
+
+                break;
+            }
+
+        case "2":
+            {
+                var service =
+                    new MenuEfficiencyService(
+                        connectionString);
+
+                await service
+                    .RunBenchmarkAsync();
+
+                break;
+            }
+
+        case "0":
+            return;
+
+        default:
+            Console.WriteLine(
+                "Invalid choice.");
+            break;
+    }
+
+    Console.WriteLine();
+
+    Console.WriteLine(
+        "Press Enter to return to menu.");
+
+    Console.ReadLine();
+}
