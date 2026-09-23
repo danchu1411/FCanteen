@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FCanteen.KitchenServer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+acb47472dcf89bc05661152e67d7e19eadb8b1f0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+46c2c1eb4ce5adb4dc17618c2c685762f26ce30d")]
 [assembly: System.Reflection.AssemblyProductAttribute("FCanteen.KitchenServer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FCanteen.KitchenServer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
