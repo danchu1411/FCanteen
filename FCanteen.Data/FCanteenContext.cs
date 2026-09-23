@@ -17,6 +17,7 @@ public class FCanteenContext(
     public DbSet<Ingredient> Ingredients => Set<Ingredient>();
 
     public DbSet<DailySettlement> DailySettlements => Set<DailySettlement>();
+    public DbSet<Staff> Staffs => Set<Staff>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -28,6 +29,7 @@ public class FCanteenContext(
         ConfigureDeviceLog(modelBuilder);
         ConfigureIngredient(modelBuilder);
         ConfigureDailySettlement(modelBuilder);
+        ConfigureStaff(modelBuilder);
 
         SeedMenuItems(modelBuilder);
     }
@@ -158,6 +160,41 @@ public class FCanteenContext(
                 .IsRequired()
                 .HasMaxLength(4000);
         });
+    }
+
+    private static void ConfigureStaff(
+        ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Staff>(
+            entity =>
+            {
+                entity.HasKey(
+                    x => x.StaffId);
+
+                entity.Property(
+                        x => x.StaffCode)
+                    .IsRequired()
+                    .HasMaxLength(30);
+
+                entity.HasIndex(
+                        x => x.StaffCode)
+                    .IsUnique();
+
+                entity.Property(
+                        x => x.FullName)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                entity.Property(
+                        x => x.Role)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(
+                        x => x.BranchCode)
+                    .IsRequired()
+                    .HasMaxLength(20);
+            });
     }
 
     private static void SeedMenuItems(ModelBuilder modelBuilder)
