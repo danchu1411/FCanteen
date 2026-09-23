@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "QUAY01": {
+      "commandName": "Project",
+      "commandLineArgs": "QUAY01"
+    },
+    "QUAY02": {
+      "commandName": "Project",
+      "commandLineArgs": "QUAY02"
+    },
+    "QUAY03": {
+      "commandName": "Project",
+      "commandLineArgs": "QUAY03"
+    }
+  }
+}
