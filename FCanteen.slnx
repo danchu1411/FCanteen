@@ -2,6 +2,7 @@
   <Folder Name="/Solution Items/">
     <File Path=".gitignore" />
   </Folder>
+  <Project Path="FCanteen.Analytics/FCanteen.Analytics.csproj" Id="8bed6713-44c4-4c97-8efd-06989eb548df" />
   <Project Path="FCanteen.Data/FCanteen.Data.csproj" />
   <Project Path="FCanteen.KitchenServer/FCanteen.KitchenServer.csproj" />
   <Project Path="FCanteen.PosClient/FCanteen.PosClient.csproj" />
