@@ -11,6 +11,11 @@ using FCanteen.Services.Interfaces;
 using FCanteen.Services.Models.Discounts;
 using FCanteen.Services.Notifications;
 
+using System.Text;
+using FCanteen.Services.Auditing;
+using FCanteen.Services.Contexts;
+using FCanteen.Services.Reporting;
+
 namespace FCanteen.Services.Implementations;
 
 public class OrderService
@@ -30,6 +35,12 @@ public class OrderService
 
     private readonly INotificationService
         _notificationService;
+
+    public IAuditLogger? AuditLogger
+    {
+        get;
+        set;
+    }
 
     public OrderService(
         IOrderRepository orderRepository,
@@ -241,5 +252,111 @@ public class OrderService
                 cancellationToken);
 
         return result;
+    }
+
+    public async Task<bool>
+    ExportOrderReportAsync(
+        int orderTicketId,
+        IReportExporter reportExporter,
+        CancellationToken cancellationToken =
+            default)
+    {
+        ArgumentNullException.ThrowIfNull(
+            reportExporter);
+
+        var order =
+            await _orderRepository
+                .GetByIdAsync(
+                    orderTicketId,
+                    cancellationToken);
+
+        if (order is null)
+        {
+            return false;
+        }
+
+        /*
+         * AMBIENT CONTEXT:
+         * Không truyền Staff vào method.
+         */
+        var currentStaff =
+            StaffAmbientContext.Current;
+
+        var staffDescription =
+            currentStaff is null
+                ? "NOT SET"
+                : $"{currentStaff.StaffCode} - " +
+                  $"{currentStaff.FullName} " +
+                  $"({currentStaff.Role}, " +
+                  $"{currentStaff.BranchCode})";
+
+        var report =
+            new StringBuilder();
+
+        report.AppendLine(
+            $"Order Ticket ID : " +
+            $"{order.OrderTicketId}");
+
+        report.AppendLine(
+            $"Branch          : " +
+            $"{order.BranchCode}");
+
+        report.AppendLine(
+            $"Counter         : " +
+            $"{order.CounterName}");
+
+        report.AppendLine(
+            $"Created At      : " +
+            $"{order.CreatedAt:yyyy-MM-dd HH:mm:ss}");
+
+        report.AppendLine(
+            $"Total Amount    : " +
+            $"{order.TotalAmount:N0} VND");
+
+        report.AppendLine(
+            $"Current Staff   : " +
+            $"{staffDescription}");
+
+        report.AppendLine();
+
+        report.AppendLine(
+            "Ticket Lines:");
+
+        foreach (var line
+                 in order.TicketLines)
+        {
+            report.AppendLine(
+                $"- MenuItemId={line.MenuItemId}; " +
+                $"Qty={line.Quantity}; " +
+                $"UnitPrice={line.UnitPrice:N0}; " +
+                $"LineTotal=" +
+                $"{line.UnitPrice * line.Quantity:N0}");
+        }
+
+        /*
+         * METHOD INJECTION:
+         * Service chỉ được truyền vào method này.
+         */
+        await reportExporter
+            .ExportAsync(
+                $"Order #{order.OrderTicketId}",
+                report.ToString(),
+                cancellationToken);
+
+        /*
+         * PROPERTY INJECTION:
+         * Logger optional nên dùng ?.
+         */
+        if (AuditLogger is not null)
+        {
+            await AuditLogger
+                .LogAsync(
+                    "EXPORT_ORDER_REPORT",
+                    $"Exported order " +
+                    $"#{order.OrderTicketId}",
+                    cancellationToken);
+        }
+
+        return true;
     }
 }

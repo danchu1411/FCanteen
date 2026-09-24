@@ -13,6 +13,8 @@ using FCanteen.Services.Discounts.Policies;
 using FCanteen.Services.Notifications;
 using FCanteen.Services.Notifications.Implementations;
 using FCanteen.Services.Lifetimes;
+using FCanteen.Services.Auditing;
+using FCanteen.Services.Reporting;
 
 var builder =
     Host.CreateApplicationBuilder(args);
@@ -53,8 +55,14 @@ builder.Services.AddScoped
  * Service registrations.
  */
 builder.Services.AddScoped
-    <IOrderService,
-     OrderService>();
+    <OrderService>();
+
+builder.Services.AddScoped
+    <IOrderService>(
+        serviceProvider =>
+            serviceProvider
+                .GetRequiredService
+                    <OrderService>());
 
 builder.Services.AddScoped
     <IReportService,
@@ -110,6 +118,20 @@ builder.Services.AddScoped
     <CaptiveDependencyDemoService>();
 
 /*
+ * YC5 - Optional audit logger.
+ */
+builder.Services.AddScoped
+    <IAuditLogger,
+     ConsoleAuditLogger>();
+
+/*
+ * YC5 - Report exporter.
+ */
+builder.Services.AddScoped
+    <IReportExporter,
+     ConsoleReportExporter>();
+
+/*
  * Console UI.
  */
 builder.Services.AddScoped
@@ -118,12 +140,30 @@ builder.Services.AddScoped
 using var host =
     builder.Build();
 
-/*
- * Tạo scope vì các repository/service
- * và DbContext đang Scoped.
- */
 using var scope =
     host.Services.CreateScope();
+
+/*
+ * YC5 - PROPERTY INJECTION.
+ *
+ * OrderService do DI container tạo.
+ * Ta KHÔNG dùng new OrderService().
+ */
+var concreteOrderService =
+    scope.ServiceProvider
+        .GetRequiredService
+            <OrderService>();
+
+/*
+ * Logger optional nên dùng GetService().
+ * Nếu không đăng ký IAuditLogger,
+ * kết quả là null và OrderService
+ * vẫn hoạt động.
+ */
+concreteOrderService.AuditLogger =
+    scope.ServiceProvider
+        .GetService
+            <IAuditLogger>();
 
 var app =
     scope.ServiceProvider

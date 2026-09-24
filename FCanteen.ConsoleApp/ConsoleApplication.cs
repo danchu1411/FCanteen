@@ -8,6 +8,9 @@ using FCanteen.Services.Models.Discounts;
 using FCanteen.Services.Lifetimes;
 using Microsoft.Extensions.DependencyInjection;
 using FCanteen.ConsoleApp.Models;
+using FCanteen.Services.Reporting;
+using FCanteen.Services.Contexts;
+using FCanteen.Data.Entities;
 
 using FCanteen.Services.Interfaces;
 
@@ -30,13 +33,17 @@ public class ConsoleApplication
     private readonly CaptiveDependencyDemoService
         _captiveDependencyDemoService;
 
+    private readonly IReportExporter
+        _reportExporter;
+
     public ConsoleApplication(
         IOrderService orderService,
         IReportService reportService,
         IInventoryService inventoryService,
         IServiceScopeFactory scopeFactory,
         CaptiveDependencyDemoService
-            captiveDependencyDemoService)
+            captiveDependencyDemoService,
+        IReportExporter reportExporter)
     {
         _orderService =
             orderService;
@@ -52,6 +59,9 @@ public class ConsoleApplication
 
         _captiveDependencyDemoService =
             captiveDependencyDemoService;
+
+        _reportExporter =
+            reportExporter;
     }
 
     public async Task RunAsync(
@@ -91,6 +101,9 @@ public class ConsoleApplication
 
             Console.WriteLine(
                 "7. YC4 - Test DbContext lifetime");
+
+            Console.WriteLine(
+                "8. YC5 - Four injection types demo");
 
             Console.WriteLine(
                 "0. Exit");
@@ -138,6 +151,11 @@ public class ConsoleApplication
 
                 case "7":
                     await TestDbContextLifetimeAsync(
+                        cancellationToken);
+                    break;
+
+                case "8":
+                    await RunInjectionTypesDemoAsync(
                         cancellationToken);
                     break;
 
@@ -777,5 +795,144 @@ public class ConsoleApplication
 
         Console.WriteLine(
             "==========================================");
+    }
+
+    private async Task RunInjectionTypesDemoAsync(
+    CancellationToken cancellationToken)
+    {
+        Console.WriteLine();
+        Console.WriteLine(
+            "==========================================");
+
+        Console.WriteLine(
+            " YC5 - FOUR INJECTION TYPES");
+
+        Console.WriteLine(
+            "==========================================");
+
+        /*
+         * Demo Staff hiện tại.
+         *
+         * YC5 chỉ yêu cầu Ambient Context cho
+         * thông tin Staff. Không yêu cầu ở đây
+         * phải truy vấn Staff từ database.
+         */
+        var currentStaff =
+            new Staff
+            {
+                StaffId =
+                    0,
+
+                StaffCode =
+                    "ST-DEMO-01",
+
+                FullName =
+                    "Lab03 Demo Staff",
+
+                Role =
+                    "Staff",
+
+                BranchCode =
+                    "BR01"
+            };
+
+        /*
+         * AMBIENT CONTEXT.
+         */
+        StaffAmbientContext.Current =
+            currentStaff;
+
+        try
+        {
+            Console.WriteLine();
+            Console.WriteLine(
+                "Ambient Context Current Staff:");
+
+            Console.WriteLine(
+                $"Code   : {currentStaff.StaffCode}");
+
+            Console.WriteLine(
+                $"Name   : {currentStaff.FullName}");
+
+            Console.WriteLine(
+                $"Role   : {currentStaff.Role}");
+
+            Console.WriteLine(
+                $"Branch : {currentStaff.BranchCode}");
+
+            Console.WriteLine();
+
+            Console.Write(
+                "Order Ticket ID to export: ");
+
+            if (!int.TryParse(
+                    Console.ReadLine(),
+                    out var orderTicketId))
+            {
+                Console.WriteLine(
+                    "Invalid Order Ticket ID.");
+
+                return;
+            }
+
+            Console.WriteLine();
+            Console.WriteLine(
+                "Calling OrderService...");
+
+            /*
+             * METHOD INJECTION:
+             *
+             * _reportExporter được truyền vào
+             * ExportOrderReportAsync().
+             *
+             * Staff KHÔNG được truyền vào.
+             */
+            var exported =
+                await _orderService
+                    .ExportOrderReportAsync(
+                        orderTicketId,
+                        _reportExporter,
+                        cancellationToken);
+
+            if (!exported)
+            {
+                Console.WriteLine(
+                    $"Order #{orderTicketId} " +
+                    $"was not found.");
+
+                return;
+            }
+
+            Console.WriteLine();
+            Console.WriteLine(
+                "YC5 injection demo completed.");
+
+            Console.WriteLine();
+
+            Console.WriteLine(
+                "1. Constructor Injection : " +
+                "Repositories + Discount Policies");
+
+            Console.WriteLine(
+                "2. Property Injection    : " +
+                "Optional Audit Logger");
+
+            Console.WriteLine(
+                "3. Method Injection      : " +
+                "IReportExporter");
+
+            Console.WriteLine(
+                "4. Ambient Context       : " +
+                "AsyncLocal<Staff>");
+        }
+        finally
+        {
+            /*
+             * Cực kỳ quan trọng:
+             * Không để Staff của operation này
+             * rò sang operation tiếp theo.
+             */
+            StaffAmbientContext.Clear();
+        }
     }
 }

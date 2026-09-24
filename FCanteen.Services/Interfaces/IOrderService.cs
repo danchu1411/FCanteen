@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using FCanteen.Data.Entities;
 using FCanteen.Services.Models.Discounts;
+using FCanteen.Services.Reporting;
 
 namespace FCanteen.Services.Interfaces;
 
@@ -27,4 +28,10 @@ public interface IOrderService
             DiscountRequest request,
             CancellationToken cancellationToken =
                 default);
+
+    Task<bool> ExportOrderReportAsync(
+        int orderTicketId,
+        IReportExporter reportExporter,
+        CancellationToken cancellationToken =
+            default);
 }
