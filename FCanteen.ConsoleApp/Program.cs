@@ -149,21 +149,25 @@ using var scope =
  * OrderService do DI container tạo.
  * Ta KHÔNG dùng new OrderService().
  */
-var concreteOrderService =
-    scope.ServiceProvider
-        .GetRequiredService
-            <OrderService>();
+builder.Services.AddScoped<OrderService>(
+    serviceProvider =>
+    {
+        var service =
+            ActivatorUtilities
+                .CreateInstance<OrderService>(
+                    serviceProvider);
 
-/*
- * Logger optional nên dùng GetService().
- * Nếu không đăng ký IAuditLogger,
- * kết quả là null và OrderService
- * vẫn hoạt động.
- */
-concreteOrderService.AuditLogger =
-    scope.ServiceProvider
-        .GetService
-            <IAuditLogger>();
+        service.AuditLogger =
+            serviceProvider
+                .GetService<IAuditLogger>();
+
+        return service;
+    });
+
+builder.Services.AddScoped<IOrderService>(
+    serviceProvider =>
+        serviceProvider
+            .GetRequiredService<OrderService>());
 
 var app =
     scope.ServiceProvider
