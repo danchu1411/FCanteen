@@ -54,15 +54,6 @@ builder.Services.AddScoped
 /*
  * Service registrations.
  */
-builder.Services.AddScoped
-    <OrderService>();
-
-builder.Services.AddScoped
-    <IOrderService>(
-        serviceProvider =>
-            serviceProvider
-                .GetRequiredService
-                    <OrderService>());
 
 builder.Services.AddScoped
     <IReportService,
@@ -115,7 +106,7 @@ builder.Services.AddSingleton
      SingletonLifetimeService>();
 
 builder.Services.AddScoped
-    <CaptiveDependencyDemoService>();
+    < CaptiveDependencyDemoService>();
 
 /*
  * YC5 - Optional audit logger.
@@ -132,22 +123,7 @@ builder.Services.AddScoped
      ConsoleReportExporter>();
 
 /*
- * Console UI.
- */
-builder.Services.AddScoped
-    <ConsoleApplication>();
-
-using var host =
-    builder.Build();
-
-using var scope =
-    host.Services.CreateScope();
-
-/*
- * YC5 - PROPERTY INJECTION.
- *
- * OrderService do DI container tạo.
- * Ta KHÔNG dùng new OrderService().
+ * YC5 - OrderService + Property Injection.
  */
 builder.Services.AddScoped<OrderService>(
     serviceProvider =>
@@ -168,6 +144,18 @@ builder.Services.AddScoped<IOrderService>(
     serviceProvider =>
         serviceProvider
             .GetRequiredService<OrderService>());
+
+/*
+ * Console UI.
+ */
+builder.Services.AddScoped
+    <ConsoleApplication>();
+
+using var host =
+    builder.Build();
+
+using var scope =
+    host.Services.CreateScope();
 
 var app =
     scope.ServiceProvider
