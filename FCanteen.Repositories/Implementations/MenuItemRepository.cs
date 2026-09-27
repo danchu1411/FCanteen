@@ -363,13 +363,51 @@ public class MenuItemRepository
                 .ToListAsync(
                     cancellationToken);
 
-        _db.MenuItemIngredients
-            .RemoveRange(
-                existing);
+        /*
+         * Update hoặc remove những dòng
+         * đã tồn tại.
+         */
+        foreach (var current in existing)
+        {
+            if (quantities.TryGetValue(
+                current.IngredientId,
+                out var quantity) &&
+                quantity > 0)
+            {
+                /*
+                 * Ingredient vẫn còn trong recipe:
+                 * chỉ update quantity,
+                 * không tạo entity cùng key mới.
+                 */
+                current.Quantity =
+                    quantity;
+            }
+            else
+            {
+                /*
+                 * Ingredient đã bị bỏ chọn.
+                 */
+                _db.MenuItemIngredients
+                    .Remove(
+                        current);
+            }
+        }
+
+        /*
+         * Chỉ Add những Ingredient chưa có
+         * trong recipe cũ.
+         */
+        var existingIngredientIds =
+            existing
+                .Select(x =>
+                    x.IngredientId)
+                .ToHashSet();
 
         foreach (var pair in quantities)
         {
-            if (pair.Value <= 0)
+            if (pair.Value <= 0 ||
+                existingIngredientIds.Contains(
+                    pair.Key))
             {
                 continue;
             }
