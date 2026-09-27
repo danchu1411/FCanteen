@@ -1,0 +1,116 @@
+﻿@model FCanteen.Web.Models.MenuItemFormViewModel
+
+@{
+    ViewData["Title"] = "Thêm món";
+}
+
+<h1>Thêm món mới</h1>
+
+<form asp-action="Create"
+      method="post">
+
+    <div asp-validation-summary="ModelOnly"
+         class="text-danger">
+    </div>
+
+    <input asp-for="CostPrice"
+           type="hidden" />
+
+    <div class="mb-3">
+        <label asp-for="Code"
+               class="form-label">
+        </label>
+
+        <input asp-for="Code"
+               class="form-control" />
+
+        <span asp-validation-for="Code"
+              class="text-danger">
+        </span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Name"
+               class="form-label">
+        </label>
+
+        <input asp-for="Name"
+               class="form-control" />
+
+        <span asp-validation-for="Name"
+              class="text-danger">
+        </span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="CategoryId"
+               class="form-label">
+        </label>
+
+        <select asp-for="CategoryId"
+                asp-items="ViewBag.Categories"
+                class="form-select">
+
+            <option value="">
+                -- Chọn nhóm món --
+            </option>
+        </select>
+
+        <span asp-validation-for="CategoryId"
+              class="text-danger">
+        </span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Price"
+               class="form-label">
+        </label>
+
+        <input asp-for="Price"
+               class="form-control" />
+
+        <span asp-validation-for="Price"
+              class="text-danger">
+        </span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Unit"
+               class="form-label">
+        </label>
+
+        <input asp-for="Unit"
+               class="form-control" />
+
+        <span asp-validation-for="Unit"
+              class="text-danger">
+        </span>
+    </div>
+
+    <div class="form-check mb-3">
+        <input asp-for="IsAvailable"
+               class="form-check-input" />
+
+        <label asp-for="IsAvailable"
+               class="form-check-label">
+        </label>
+    </div>
+
+    <button type="submit"
+            class="btn btn-primary">
+        Lưu
+    </button>
+
+    <a asp-action="Index"
+       class="btn btn-secondary">
+        Quay lại
+    </a>
+</form>
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+
+    <script src="~/js/minimum-markup-validation.js">
+    </script>
+}

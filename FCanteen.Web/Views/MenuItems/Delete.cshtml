@@ -1,0 +1,55 @@
+﻿@model FCanteen.Data.Entities.MenuItem
+
+@{
+    ViewData["Title"] = "Xoá món";
+}
+
+<h1>Xoá món</h1>
+
+<div class="alert alert-danger">
+    Bạn có chắc muốn xoá món này?
+</div>
+
+<dl class="row">
+
+    <dt class="col-sm-3">
+        Mã món
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.Code
+    </dd>
+
+    <dt class="col-sm-3">
+        Tên món
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.Name
+    </dd>
+
+    <dt class="col-sm-3">
+        Giá bán
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.Price.ToString("N0")
+        VND
+    </dd>
+
+</dl>
+
+<form asp-action="Delete"
+      asp-route-id="@Model.MenuItemId"
+      method="post">
+
+    <button type="submit"
+            class="btn btn-danger">
+        Xác nhận xoá
+    </button>
+
+    <a asp-action="Index"
+       class="btn btn-secondary">
+        Huỷ
+    </a>
+</form>

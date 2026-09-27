@@ -11,6 +11,7 @@ using FCanteen.Services.Interfaces;
 using FCanteen.Services.Notifications;
 using FCanteen.Services.Notifications.Implementations;
 using FCanteen.Services.Reporting;
+using FCanteen.Data.Seeders;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,6 +46,10 @@ builder.Services.AddDbContext<FCanteenContext>(
 builder.Services.AddScoped<
     IMenuItemRepository,
     MenuItemRepository>();
+
+builder.Services.AddScoped<
+    ICategoryRepository,
+    CategoryRepository>();
 
 builder.Services.AddScoped<
     IOrderRepository,
@@ -133,6 +138,18 @@ builder.Services.AddScoped<IOrderService>(
  */
 var app =
     builder.Build();
+
+using (var scope =
+    app.Services.CreateScope())
+{
+    var db =
+        scope.ServiceProvider
+            .GetRequiredService<
+                FCanteenContext>();
+
+    await Lab04DemoDataSeeder
+        .SeedAsync(db);
+}
 
 if (!app.Environment.IsDevelopment())
 {

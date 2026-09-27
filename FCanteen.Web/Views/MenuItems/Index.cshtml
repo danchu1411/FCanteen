@@ -1,0 +1,81 @@
+﻿@model IReadOnlyList<FCanteen.Data.Entities.MenuItem>
+
+@{
+    ViewData["Title"] = "Thực đơn";
+}
+
+<h1>Quản lý thực đơn</h1>
+
+@if (TempData["SuccessMessage"] is string message)
+{
+    <div class="alert alert-success">
+        @message
+    </div>
+}
+
+<p>
+    <a asp-action="Create"
+       class="btn btn-primary">
+        Thêm món mới
+    </a>
+</p>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Mã món</th>
+            <th>Tên món</th>
+            <th>Nhóm</th>
+            <th>Giá bán</th>
+            <th>Đơn vị</th>
+            <th>Còn bán</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Code</td>
+
+                <td>@item.Name</td>
+
+                <td>
+                    @(item.Category?.Name
+                        ?? "Chưa phân nhóm")
+                </td>
+
+                <td>
+                    @item.Price.ToString("N0")
+                    VND
+                </td>
+
+                <td>@item.Unit</td>
+
+                <td>
+                    @(item.IsAvailable
+                        ? "Có"
+                        : "Không")
+                </td>
+
+                <td>
+                    <a asp-action="Details"
+                       asp-route-id="@item.MenuItemId">
+                        Chi tiết
+                    </a>
+                    |
+                    <a asp-action="Edit"
+                       asp-route-id="@item.MenuItemId">
+                        Sửa
+                    </a>
+                    |
+                    <a asp-action="Delete"
+                       asp-route-id="@item.MenuItemId">
+                        Xoá
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

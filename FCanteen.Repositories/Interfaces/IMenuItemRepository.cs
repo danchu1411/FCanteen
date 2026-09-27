@@ -25,4 +25,30 @@ public interface IMenuItemRepository
             int menuItemId,
             CancellationToken cancellationToken =
                 default);
+
+    Task AddAsync(
+        MenuItem menuItem,
+        CancellationToken cancellationToken =
+            default);
+
+    Task UpdateAsync(
+        MenuItem menuItem,
+        CancellationToken cancellationToken =
+            default);
+
+    Task<bool> DeleteAsync(
+        int menuItemId,
+        CancellationToken cancellationToken =
+            default);
+
+    Task<bool> CodeExistsAsync(
+        string code,
+        int? excludeMenuItemId = null,
+        CancellationToken cancellationToken =
+            default);
+
+    Task<decimal> CalculateCostAsync(
+        int menuItemId,
+        CancellationToken cancellationToken =
+            default);
 }

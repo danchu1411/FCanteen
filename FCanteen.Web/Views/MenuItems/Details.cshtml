@@ -1,0 +1,79 @@
+﻿@model FCanteen.Data.Entities.MenuItem
+
+@{
+    ViewData["Title"] = "Chi tiết món";
+
+    decimal cost =
+        ViewBag.CostPrice is decimal value
+            ? value
+            : 0m;
+}
+
+<h1>Chi tiết món</h1>
+
+<dl class="row">
+
+    <dt class="col-sm-3">
+        Mã món
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.Code
+    </dd>
+
+    <dt class="col-sm-3">
+        Tên món
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.Name
+    </dd>
+
+    <dt class="col-sm-3">
+        Nhóm
+    </dt>
+
+    <dd class="col-sm-9">
+        @(Model.Category?.Name
+            ?? "Chưa phân nhóm")
+    </dd>
+
+    <dt class="col-sm-3">
+        Giá vốn
+    </dt>
+
+    <dd class="col-sm-9">
+        @cost.ToString("N0") VND
+    </dd>
+
+    <dt class="col-sm-3">
+        Giá bán
+    </dt>
+
+    <dd class="col-sm-9">
+        @Model.Price.ToString("N0")
+        VND
+    </dd>
+
+    <dt class="col-sm-3">
+        Còn bán
+    </dt>
+
+    <dd class="col-sm-9">
+        @(Model.IsAvailable
+            ? "Có"
+            : "Không")
+    </dd>
+
+</dl>
+
+<a asp-action="Edit"
+   asp-route-id="@Model.MenuItemId"
+   class="btn btn-primary">
+    Sửa
+</a>
+
+<a asp-action="Index"
+   class="btn btn-secondary">
+    Quay lại
+</a>
