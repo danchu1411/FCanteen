@@ -1,0 +1,182 @@
+﻿@model FCanteen.Web.Models.PurchaseCartViewModel
+
+@{
+    ViewData["Title"] = "Giỏ nhập nguyên liệu";
+}
+
+<h1>Giỏ nhập nguyên liệu</h1>
+
+@if (TempData["PurchaseSuccess"] is string success)
+{
+    <div class="alert alert-success">
+        @success
+    </div>
+}
+
+@if (TempData["PurchaseError"] is string error)
+{
+    <div class="alert alert-danger">
+        @error
+    </div>
+}
+
+@if (Model.Items.Count == 0)
+{
+    <div class="alert alert-info">
+        Giỏ nhập đang trống.
+    </div>
+
+    <a asp-action="Index"
+       class="btn btn-primary">
+        Chọn nguyên liệu
+    </a>
+}
+else
+{
+    <p class="text-muted">
+        Số dòng:
+        <strong>
+            @Model.LineCount
+        </strong>
+    </p>
+
+    <table class="table
+        table-bordered
+        table-striped
+        align-middle">
+
+        <thead>
+            <tr>
+                <th>Nguyên liệu</th>
+                <th>Nhà cung cấp</th>
+                <th>Đơn giá</th>
+                <th>Đơn vị</th>
+                <th style="width: 220px;">
+                    Số lượng
+                </th>
+                <th>Thành tiền</th>
+                <th style="width: 100px;">
+                    Xoá
+                </th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            @foreach (var item
+                in Model.Items)
+            {
+                <tr>
+
+                    <td>
+                        @item.Name
+                    </td>
+
+                    <td>
+                        @item.SupplierName
+                    </td>
+
+                    <td>
+                        @item.UnitCost.ToString("N0")
+                        VND
+                    </td>
+
+                    <td>
+                        @item.Unit
+                    </td>
+
+                    <td>
+
+                        <form asp-action="Update"
+                              method="post"
+                              class="d-flex gap-2">
+
+                            <input type="hidden"
+                                   name="ingredientId"
+                                   value="@item.IngredientId" />
+
+                            <input type="number"
+                                   name="quantity"
+                                   value="@item.Quantity.ToString(
+                                                                   System.Globalization
+                                                                       .CultureInfo
+                                                                       .InvariantCulture)"
+                                   min="0.01"
+                                   step="0.01"
+                                   class="form-control" />
+
+                            <button type="submit"
+                                    class="btn btn-outline-primary">
+                                Lưu
+                            </button>
+
+                        </form>
+
+                    </td>
+
+                    <td>
+                        @item.LineTotal.ToString("N0")
+                        VND
+                    </td>
+
+                    <td>
+
+                        <form asp-action="Remove"
+                              method="post">
+
+                            <input type="hidden"
+                                   name="ingredientId"
+                                   value="@item.IngredientId" />
+
+                            <button type="submit"
+                                    class="btn btn-outline-danger">
+                                Xoá
+                            </button>
+
+                        </form>
+
+                    </td>
+
+                </tr>
+            }
+
+        </tbody>
+
+        <tfoot>
+            <tr>
+                <th colspan="5"
+                    class="text-end">
+                    Tổng cộng
+                </th>
+
+                <th>
+                    @Model.TotalAmount.ToString("N0")
+                    VND
+                </th>
+
+                <th>
+                </th>
+            </tr>
+        </tfoot>
+
+    </table>
+
+    <div class="d-flex gap-2">
+
+        <a asp-action="Index"
+           class="btn btn-secondary">
+            Tiếp tục chọn
+        </a>
+
+        <form asp-action="Confirm"
+              method="post">
+
+            <button type="submit"
+                    class="btn btn-success">
+                Xác nhận đơn nhập
+            </button>
+
+        </form>
+
+    </div>
+}

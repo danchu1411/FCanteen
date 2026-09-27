@@ -1,4 +1,10 @@
 ﻿<!DOCTYPE html>
+@{
+    var purchaseCartCount =
+        Context.Session.GetInt32(
+            "IngredientPurchaseCartCount")
+        ?? 0;
+}
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -31,6 +37,33 @@
                                asp-action="Index">
                                 Thực đơn
                             </a>
+                        </li>
+                        <li class="nav-item">
+
+                            <a class="nav-link text-dark"
+                               asp-controller="IngredientPurchases"
+                               asp-action="Index">
+
+                                Nhập nguyên liệu
+
+                            </a>
+
+                        </li>
+
+                        <li class="nav-item">
+
+                            <a class="nav-link text-dark"
+                               asp-controller="IngredientPurchases"
+                               asp-action="Cart">
+
+                                Giỏ nhập
+
+                                <span class="badge bg-primary">
+                                    @purchaseCartCount
+                                </span>
+
+                            </a>
+
                         </li>
                     </ul>
                 </div>

@@ -30,6 +30,8 @@ public class IngredientRepository
     {
         return await _db.Ingredients
             .AsNoTracking()
+            .Include(x =>
+                x.Supplier)
             .OrderBy(x =>
                 x.IngredientId)
             .ToListAsync(
@@ -43,6 +45,8 @@ public class IngredientRepository
                 default)
     {
         return await _db.Ingredients
+            .Include(x =>
+                x.Supplier)
             .FirstOrDefaultAsync(
                 x =>
                     x.IngredientId ==

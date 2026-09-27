@@ -25,6 +25,24 @@ var builder =
 builder.Services.AddControllersWithViews();
 
 /*
+ * YC4 - Session cart.
+ */
+builder.Services.AddDistributedMemoryCache();
+
+builder.Services.AddSession(
+    options =>
+    {
+        options.IdleTimeout =
+            TimeSpan.FromMinutes(30);
+
+        options.Cookie.HttpOnly =
+            true;
+
+        options.Cookie.IsEssential =
+            true;
+    });
+
+/*
  * Database
  */
 var connectionString =
@@ -63,6 +81,10 @@ builder.Services.AddScoped<
     IDiscountPolicyLogRepository,
     DiscountPolicyLogRepository>();
 
+builder.Services.AddScoped<
+    IDeviceLogRepository,
+    DeviceLogRepository>();
+
 /*
  * Services reused from Lab03.
  */
@@ -73,6 +95,10 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     IInventoryService,
     InventoryService>();
+
+builder.Services.AddScoped<
+    IPurchaseOrderService,
+    PurchaseOrderService>();
 
 /*
  * Lab03 discount policies.
@@ -164,6 +190,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseSession();
 
 app.UseAuthorization();
 
