@@ -9,4 +9,5 @@
   <Project Path="FCanteen.PosClient/FCanteen.PosClient.csproj" />
   <Project Path="FCanteen.Repositories/FCanteen.Repositories.csproj" Id="5b7a138a-4c16-4cd8-8a0a-54278c8dcf34" />
   <Project Path="FCanteen.Services/FCanteen.Services.csproj" Id="03cc3365-816a-4271-9347-c2bb46bc0f95" />
+  <Project Path="FCanteen.Web/FCanteen.Web.csproj" Id="99eb59b5-665c-466e-80f8-32346c034dc9" />
 </Solution>
