@@ -51,4 +51,9 @@ public interface IMenuItemRepository
         int menuItemId,
         CancellationToken cancellationToken =
             default);
+
+    Task<bool> HasTicketLinesAsync(
+        int menuItemId,
+        CancellationToken cancellationToken =
+        default);
 }

@@ -336,6 +336,38 @@ public class MenuItemsController
      */
     [HttpGet]
     public async Task<IActionResult> Delete(
+    int id,
+    CancellationToken cancellationToken)
+    {
+        var menuItem =
+            await _menuItemRepository
+                .GetByIdAsync(
+                    id,
+                    cancellationToken);
+
+        if (menuItem is null)
+        {
+            return NotFound();
+        }
+
+        ViewBag.HasTicketLines =
+            await _menuItemRepository
+                .HasTicketLinesAsync(
+                    id,
+                    cancellationToken);
+
+        return View(
+            menuItem);
+    }
+
+    /*
+     * DELETE POST
+     */
+    [HttpPost]
+    [ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult>
+    DeleteConfirmed(
         int id,
         CancellationToken cancellationToken)
     {
@@ -350,21 +382,23 @@ public class MenuItemsController
             return NotFound();
         }
 
-        return View(
-            menuItem);
-    }
+        var hasTicketLines =
+            await _menuItemRepository
+                .HasTicketLinesAsync(
+                    id,
+                    cancellationToken);
 
-    /*
-     * DELETE POST
-     */
-    [HttpPost]
-    [ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult>
-        DeleteConfirmed(
-            int id,
-            CancellationToken cancellationToken)
-    {
+        if (hasTicketLines)
+        {
+            TempData["ErrorMessage"] =
+                $"Không thể xoá món " +
+                $"{menuItem.Code} vì món này " +
+                $"đã xuất hiện trong hoá đơn.";
+
+            return RedirectToAction(
+                nameof(Index));
+        }
+
         var deleted =
             await _menuItemRepository
                 .DeleteAsync(
@@ -377,7 +411,8 @@ public class MenuItemsController
         }
 
         TempData["SuccessMessage"] =
-            "Đã xoá món thành công.";
+            $"Đã xoá món " +
+            $"{menuItem.Code} thành công.";
 
         return RedirectToAction(
             nameof(Index));

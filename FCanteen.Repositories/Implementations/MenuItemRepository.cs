@@ -170,4 +170,19 @@ public class MenuItemRepository
 
         return cost ?? 0m;
     }
+
+    public async Task<bool>
+    HasTicketLinesAsync(
+        int menuItemId,
+        CancellationToken cancellationToken =
+            default)
+    {
+        return await _db.TicketLines
+            .AsNoTracking()
+            .AnyAsync(
+                x =>
+                    x.MenuItemId ==
+                    menuItemId,
+                cancellationToken);
+    }
 }

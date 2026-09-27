@@ -2,13 +2,32 @@
 
 @{
     ViewData["Title"] = "Xoá món";
+
+    bool hasTicketLines =
+        ViewBag.HasTicketLines is bool value
+            && value;
 }
 
 <h1>Xoá món</h1>
 
-<div class="alert alert-danger">
-    Bạn có chắc muốn xoá món này?
-</div>
+@if (hasTicketLines)
+{
+    <div class="alert alert-warning">
+        Không thể xoá món này vì món đã xuất hiện
+        trong hoá đơn.
+
+        <br />
+
+        Dữ liệu món cần được giữ lại để bảo toàn
+        lịch sử bán hàng.
+    </div>
+}
+else
+{
+    <div class="alert alert-danger">
+        Bạn có chắc muốn xoá món này?
+    </div>
+}
 
 <dl class="row">
 
@@ -39,17 +58,27 @@
 
 </dl>
 
-<form asp-action="Delete"
-      asp-route-id="@Model.MenuItemId"
-      method="post">
+@if (!hasTicketLines)
+{
+    <form asp-action="Delete"
+          asp-route-id="@Model.MenuItemId"
+          method="post">
 
-    <button type="submit"
-            class="btn btn-danger">
-        Xác nhận xoá
-    </button>
+        <button type="submit"
+                class="btn btn-danger">
+            Xác nhận xoá
+        </button>
 
+        <a asp-action="Index"
+           class="btn btn-secondary">
+            Huỷ
+        </a>
+    </form>
+}
+else
+{
     <a asp-action="Index"
        class="btn btn-secondary">
-        Huỷ
+        Quay lại
     </a>
-</form>
+}
