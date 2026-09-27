@@ -242,10 +242,18 @@ else
 
                         |
 
+                        <a asp-action="Ingredients"
+                           asp-route-id="@item.MenuItemId">
+                            Nguyên liệu
+                        </a>
+
+                         |
+
                         <a asp-action="Delete"
                            asp-route-id="@item.MenuItemId">
                             Xoá
                         </a>
+
                     </td>
 
                 </tr>

@@ -68,4 +68,10 @@ public interface IMenuItemRepository
             int pageSize,
             CancellationToken cancellationToken =
                 default);
+
+    Task ReplaceIngredientsAsync(
+        int menuItemId,
+        IReadOnlyDictionary<int, decimal> quantities,
+        CancellationToken cancellationToken =
+            default);
 }

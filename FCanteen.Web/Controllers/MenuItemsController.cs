@@ -1,5 +1,6 @@
 ﻿using FCanteen.Data.Entities;
 using FCanteen.Repositories.Interfaces;
+using FCanteen.Services.Interfaces;
 using FCanteen.Web.Models;
 
 using Microsoft.AspNetCore.Mvc;
@@ -16,15 +17,22 @@ public class MenuItemsController
     private readonly ICategoryRepository
         _categoryRepository;
 
+    private readonly IInventoryService
+        _inventoryService;
+
     public MenuItemsController(
         IMenuItemRepository menuItemRepository,
-        ICategoryRepository categoryRepository)
+        ICategoryRepository categoryRepository,
+        IInventoryService inventoryService)
     {
         _menuItemRepository =
             menuItemRepository;
 
         _categoryRepository =
             categoryRepository;
+
+        _inventoryService =
+            inventoryService;
     }
 
     /*
@@ -515,5 +523,289 @@ public class MenuItemsController
                 nameof(Category.CategoryId),
                 nameof(Category.Name),
                 selectedCategoryId);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Ingredients(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var menuItem =
+            await _menuItemRepository
+                .GetByIdAsync(
+                    id,
+                    cancellationToken);
+
+        if (menuItem is null)
+        {
+            return NotFound();
+        }
+
+        var ingredients =
+            await _inventoryService
+                .GetIngredientsAsync(
+                    cancellationToken);
+
+        var currentQuantities =
+            menuItem.MenuItemIngredients
+                .ToDictionary(
+                    x => x.IngredientId,
+                    x => x.Quantity);
+
+        var model =
+            new MenuItemIngredientsViewModel
+            {
+                MenuItemId =
+                    menuItem.MenuItemId,
+
+                Code =
+                    menuItem.Code,
+
+                Name =
+                    menuItem.Name,
+
+                SellingPrice =
+                    menuItem.Price,
+
+                Ingredients =
+                    ingredients
+                        .Select(
+                            ingredient =>
+                            {
+                                var selected =
+                                    currentQuantities
+                                        .TryGetValue(
+                                            ingredient.IngredientId,
+                                            out var quantity);
+
+                                return new
+                                    MenuItemIngredientRowViewModel
+                                {
+                                    IngredientId =
+                                            ingredient.IngredientId,
+
+                                    Name =
+                                            ingredient.Name,
+
+                                    Unit =
+                                            ingredient.Unit,
+
+                                    UnitCost =
+                                            ingredient.UnitCost,
+
+                                    IsSelected =
+                                            selected,
+
+                                    Quantity =
+                                            selected
+                                                ? quantity
+                                                : 0m
+                                };
+                            })
+                        .ToList()
+            };
+
+        return View(
+            model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Ingredients(
+        int id,
+        MenuItemIngredientsViewModel model,
+        CancellationToken cancellationToken)
+    {
+        if (id != model.MenuItemId)
+        {
+            return BadRequest();
+        }
+
+        var menuItem =
+            await _menuItemRepository
+                .GetByIdAsync(
+                    id,
+                    cancellationToken);
+
+        if (menuItem is null)
+        {
+            return NotFound();
+        }
+
+        var ingredients =
+            await _inventoryService
+                .GetIngredientsAsync(
+                    cancellationToken);
+
+        var ingredientMap =
+            ingredients.ToDictionary(
+                x => x.IngredientId);
+
+        var quantities =
+            new Dictionary<int, decimal>();
+
+        decimal costPrice =
+            0m;
+
+        for (var index = 0;
+             index < model.Ingredients.Count;
+             index++)
+        {
+            var row =
+                model.Ingredients[index];
+
+            if (!row.IsSelected)
+            {
+                continue;
+            }
+
+            if (!ingredientMap.TryGetValue(
+                row.IngredientId,
+                out var ingredient))
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Có nguyên liệu không hợp lệ.");
+
+                continue;
+            }
+
+            if (row.Quantity <= 0)
+            {
+                ModelState.AddModelError(
+                    $"Ingredients[{index}].Quantity",
+                    "Định lượng phải lớn hơn 0.");
+
+                continue;
+            }
+
+            quantities[
+                ingredient.IngredientId] =
+                    row.Quantity;
+
+            costPrice +=
+                row.Quantity *
+                ingredient.UnitCost;
+        }
+
+        if (quantities.Count == 0)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                "Vui lòng chọn ít nhất một nguyên liệu.");
+        }
+
+        var minimumSellingPrice =
+            costPrice *
+            1.20m;
+
+        /*
+         * Giữ nhất quán với YC2:
+         * sau khi đổi recipe,
+         * giá bán vẫn phải >= cost + 20%.
+         */
+        if (costPrice > 0 &&
+            menuItem.Price <
+            minimumSellingPrice)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                $"Giá vốn mới là " +
+                $"{costPrice:N0} VND. " +
+                $"Giá bán hiện tại phải ít nhất " +
+                $"{minimumSellingPrice:N0} VND.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            /*
+             * Không tin Name/Unit/UnitCost
+             * được POST từ browser.
+             * Rebuild lại bằng dữ liệu DB.
+             */
+            foreach (var row
+                in model.Ingredients)
+            {
+                if (ingredientMap.TryGetValue(
+                    row.IngredientId,
+                    out var ingredient))
+                {
+                    row.Name =
+                        ingredient.Name;
+
+                    row.Unit =
+                        ingredient.Unit;
+
+                    row.UnitCost =
+                        ingredient.UnitCost;
+                }
+            }
+
+            model.Code =
+                menuItem.Code;
+
+            model.Name =
+                menuItem.Name;
+
+            model.SellingPrice =
+                menuItem.Price;
+
+            return View(
+                model);
+        }
+
+        await _menuItemRepository
+            .ReplaceIngredientsAsync(
+                id,
+                quantities,
+                cancellationToken);
+
+        TempData["SuccessMessage"] =
+            $"Đã cập nhật nguyên liệu cho " +
+            $"{menuItem.Code}. " +
+            $"Giá vốn: {costPrice:N0} VND.";
+
+        return RedirectToAction(
+            nameof(Ingredients),
+            new
+            {
+                id
+            });
+    }
+
+    [HttpGet("/api/menu-items/available")]
+    public async Task<JsonResult> AvailableJson(
+    CancellationToken cancellationToken)
+    {
+        var menuItems =
+            await _menuItemRepository
+                .GetAvailableAsync(
+                    cancellationToken);
+
+        var result =
+            menuItems.Select(
+                x => new
+                {
+                    menuItemId =
+                        x.MenuItemId,
+
+                    code =
+                        x.Code,
+
+                    name =
+                        x.Name,
+
+                    price =
+                        x.Price,
+
+                    unit =
+                        x.Unit,
+
+                    isAvailable =
+                        x.IsAvailable
+                });
+
+        return Json(
+            result);
     }
 }

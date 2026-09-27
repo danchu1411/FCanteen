@@ -348,4 +348,47 @@ public class MenuItemRepository
                 pageSize
         };
     }
+
+    public async Task ReplaceIngredientsAsync(
+    int menuItemId,
+    IReadOnlyDictionary<int, decimal> quantities,
+    CancellationToken cancellationToken =
+        default)
+    {
+        var existing =
+            await _db.MenuItemIngredients
+                .Where(x =>
+                    x.MenuItemId ==
+                    menuItemId)
+                .ToListAsync(
+                    cancellationToken);
+
+        _db.MenuItemIngredients
+            .RemoveRange(
+                existing);
+
+        foreach (var pair in quantities)
+        {
+            if (pair.Value <= 0)
+            {
+                continue;
+            }
+
+            _db.MenuItemIngredients.Add(
+                new MenuItemIngredient
+                {
+                    MenuItemId =
+                        menuItemId,
+
+                    IngredientId =
+                        pair.Key,
+
+                    Quantity =
+                        pair.Value
+                });
+        }
+
+        await _db.SaveChangesAsync(
+            cancellationToken);
+    }
 }

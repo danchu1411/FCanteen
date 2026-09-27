@@ -1,0 +1,235 @@
+﻿@model FCanteen.Web.Models.MenuItemIngredientsViewModel
+
+@{
+    ViewData["Title"] = "Nguyên liệu món";
+}
+
+<h1>Nguyên liệu món</h1>
+
+<div class="mb-3">
+    <strong>@Model.Code</strong>
+    -
+    @Model.Name
+</div>
+
+@if (TempData["SuccessMessage"] is string message)
+{
+    <div class="alert alert-success">
+        @message
+    </div>
+}
+
+<div asp-validation-summary="ModelOnly"
+     class="text-danger mb-3">
+</div>
+
+<div class="alert alert-info">
+    Giá bán hiện tại:
+    <strong>
+        @Model.SellingPrice.ToString("N0")
+        VND
+    </strong>
+
+    <br />
+
+    Giá vốn:
+    <strong id="totalCost">
+        @Model.CostPrice.ToString("N0")
+        VND
+    </strong>
+
+    <br />
+
+    Giá bán tối thiểu (cost + 20%):
+    <strong id="minimumPrice">
+        @Model.MinimumSellingPrice.ToString("N0")
+        VND
+    </strong>
+</div>
+
+<form asp-action="Ingredients"
+      asp-route-id="@Model.MenuItemId"
+      method="post">
+
+    <input asp-for="MenuItemId"
+           type="hidden" />
+
+    <table class="table
+        table-bordered
+        table-striped
+        align-middle">
+
+        <thead>
+            <tr>
+                <th>Chọn</th>
+                <th>Nguyên liệu</th>
+                <th>Đơn giá</th>
+                <th>Đơn vị</th>
+                <th>Định lượng</th>
+                <th>Giá vốn dòng</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            @for (var i = 0;
+                i < Model.Ingredients.Count;
+                i++)
+            {
+                var item =
+                    Model.Ingredients[i];
+
+                <tr class="ingredient-row"
+                    data-unit-cost="@item.UnitCost.ToString(
+                                            System.Globalization
+                                                .CultureInfo.InvariantCulture)">
+
+                    <td>
+                        <input asp-for="Ingredients[i].IsSelected"
+                               class="form-check-input ingredient-selected" />
+
+                        <input asp-for="Ingredients[i].IngredientId"
+                               type="hidden" />
+                    </td>
+
+                    <td>
+                        @item.Name
+                    </td>
+
+                    <td>
+                        @item.UnitCost.ToString("N0")
+                        VND
+                    </td>
+
+                    <td>
+                        @item.Unit
+                    </td>
+
+                    <td>
+                        <input asp-for="Ingredients[i].Quantity"
+                               type="number"
+                               min="0"
+                               step="0.0001"
+                               class="form-control ingredient-quantity" />
+
+                        <span asp-validation-for="Ingredients[i].Quantity"
+                              class="text-danger">
+                        </span>
+                    </td>
+
+                    <td class="line-cost">
+                        @item.LineCost.ToString("N0")
+                        VND
+                    </td>
+
+                </tr>
+            }
+
+        </tbody>
+
+    </table>
+
+    <button type="submit"
+            class="btn btn-primary">
+        Lưu công thức
+    </button>
+
+    <a asp-action="Index"
+       class="btn btn-secondary">
+        Quay lại
+    </a>
+
+</form>
+
+@section Scripts
+{
+    <script>
+        function formatMoney(value) {
+            return new Intl.NumberFormat(
+                'vi-VN'
+            ).format(value) + ' VND';
+        }
+
+        function refreshCost() {
+            let total = 0;
+
+            document
+                .querySelectorAll(
+                    '.ingredient-row'
+                )
+                .forEach(row => {
+                    const checkbox =
+                        row.querySelector(
+                            '.ingredient-selected'
+                        );
+
+                    const quantityInput =
+                        row.querySelector(
+                            '.ingredient-quantity'
+                        );
+
+                    const lineCostCell =
+                        row.querySelector(
+                            '.line-cost'
+                        );
+
+                    const unitCost =
+                        parseFloat(
+                            row.dataset.unitCost
+                        ) || 0;
+
+                    const quantity =
+                        parseFloat(
+                            quantityInput.value
+                        ) || 0;
+
+                    const lineCost =
+                        checkbox.checked
+                            ? unitCost * quantity
+                            : 0;
+
+                    total += lineCost;
+
+                    lineCostCell.textContent =
+                        formatMoney(
+                            lineCost
+                        );
+                });
+
+            document
+                .getElementById(
+                    'totalCost'
+                )
+                .textContent =
+                formatMoney(total);
+
+            document
+                .getElementById(
+                    'minimumPrice'
+                )
+                .textContent =
+                formatMoney(
+                    total * 1.2
+                );
+        }
+
+        document
+            .querySelectorAll(
+                '.ingredient-selected, ' +
+                '.ingredient-quantity'
+            )
+            .forEach(element => {
+                element.addEventListener(
+                    'input',
+                    refreshCost
+                );
+
+                element.addEventListener(
+                    'change',
+                    refreshCost
+                );
+            });
+
+        refreshCost();
+    </script>
+}

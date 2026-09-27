@@ -1,12 +1,11 @@
 ﻿using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
-using FCanteen.Data;
 using FCanteen.Data.Contracts;
-using FCanteen.Data.Entities;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Concurrent;
+using System.Net.Http.Json;
+using FCanteen.PosClient.Models;
 
 namespace FCanteen.PosClient;
 
@@ -39,11 +38,19 @@ internal class Program
                     optional: false)
                 .Build();
 
-        var connectionString =
-            configuration
-                .GetConnectionString("FCanteen")
+        var menuApiBaseUrl =
+            configuration[
+                "MenuApi:BaseUrl"]
             ?? throw new InvalidOperationException(
-                "Connection string 'FCanteen' was not found.");
+                "MenuApi:BaseUrl was not found.");
+
+        using var httpClient =
+            new HttpClient
+            {
+                BaseAddress =
+                    new Uri(
+                        menuApiBaseUrl)
+            };
 
         var serverHost =
             configuration[
@@ -102,7 +109,7 @@ internal class Program
             {
                 await CreateOrderAsync(
                     counterName,
-                    connectionString,
+                    httpClient,
                     serverHost,
                     tcpPort,
                     availability);
@@ -149,22 +156,15 @@ internal class Program
 
     private static async Task CreateOrderAsync(
         string counterName,
-        string connectionString,
+        HttpClient httpClient,
         string serverHost,
         int tcpPort,
         ConcurrentDictionary<int, bool>
             availability)
     {
-        await using var db =
-            CreateDbContext(
-                connectionString);
-
-        // YC3: đọc thực đơn từ database.
         var menuItems =
-            await db.MenuItems
-                .AsNoTracking()
-                .OrderBy(x => x.MenuItemId)
-                .ToListAsync();
+            await LoadAvailableMenuAsync(
+                httpClient);
 
         foreach (var item in menuItems)
         {
@@ -358,7 +358,7 @@ internal class Program
     }
 
     private static void DisplayMenu(
-        List<MenuItem> menuItems,
+        List<MenuItemApiDto> menuItems,
         ConcurrentDictionary<int, bool>
             availability)
     {
@@ -409,7 +409,7 @@ internal class Program
     }
 
     private static void DisplayOrderSummary(
-        List<MenuItem> menuItems,
+        List<MenuItemApiDto> menuItems,
         List<OrderLineRequest> lines,
         decimal clientTotal)
     {
@@ -593,17 +593,30 @@ internal class Program
             "===========================================");
     }
 
-    private static FCanteenContext CreateDbContext(
-        string connectionString)
+   
+    private static async Task<
+    List<MenuItemApiDto>>
+    LoadAvailableMenuAsync(
+        HttpClient httpClient)
     {
-        var options =
-            new DbContextOptionsBuilder
-                <FCanteenContext>()
-                .UseSqlServer(
-                    connectionString)
-                .Options;
+        try
+        {
+            var menuItems =
+                await httpClient
+                    .GetFromJsonAsync<
+                        List<MenuItemApiDto>>(
+                        "api/menu-items/available");
 
-        return new FCanteenContext(
-            options);
+            return menuItems
+                ?? [];
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new InvalidOperationException(
+                "Cannot load menu from " +
+                "FCanteen.Web API. " +
+                "Make sure FCanteen.Web is running.",
+                ex);
+        }
     }
 }
