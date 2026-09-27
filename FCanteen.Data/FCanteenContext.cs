@@ -24,39 +24,81 @@ public class FCanteenContext(
     DiscountPolicyLogs =>
         Set<DiscountPolicyLog>();
 
+    public DbSet<Category> Categories =>
+        Set<Category>();
+
+    public DbSet<Supplier> Suppliers =>
+        Set<Supplier>();
+
+    public DbSet<MenuItemIngredient>
+        MenuItemIngredients =>
+            Set<MenuItemIngredient>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
+        ConfigureCategory(modelBuilder);
+        ConfigureSupplier(modelBuilder);
         ConfigureMenuItem(modelBuilder);
+        ConfigureIngredient(modelBuilder);
+        ConfigureMenuItemIngredient(modelBuilder);
+
         ConfigureOrderTicket(modelBuilder);
         ConfigureTicketLine(modelBuilder);
         ConfigureDeviceLog(modelBuilder);
-        ConfigureIngredient(modelBuilder);
         ConfigureDailySettlement(modelBuilder);
         ConfigureStaff(modelBuilder);
         ConfigureDiscountPolicyLog(modelBuilder);
 
+        SeedCategories(modelBuilder);
+        SeedSuppliers(modelBuilder);
         SeedMenuItems(modelBuilder);
     }
 
-    private static void ConfigureMenuItem(ModelBuilder modelBuilder)
+    private static void ConfigureMenuItem(
+    ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<MenuItem>(entity =>
-        {
-            entity.HasKey(x => x.MenuItemId);
+        modelBuilder.Entity<MenuItem>(
+            entity =>
+            {
+                entity.HasKey(
+                    x => x.MenuItemId);
 
-            entity.Property(x => x.Name)
-                .IsRequired()
-                .HasMaxLength(200);
+                entity.Property(
+                        x => x.Code)
+                    .IsRequired()
+                    .HasMaxLength(20);
 
-            entity.Property(x => x.Price)
-                .HasPrecision(18, 2);
+                /*
+                 * YC2 yêu cầu tên tối đa 100 ký tự.
+                 */
+                entity.Property(
+                        x => x.Name)
+                    .IsRequired()
+                    .HasMaxLength(100);
 
-            entity.Property(x => x.Unit)
-                .IsRequired()
-                .HasMaxLength(50);
-        });
+                entity.Property(
+                        x => x.Price)
+                    .HasPrecision(18, 2);
+
+                entity.Property(
+                        x => x.Unit)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.HasIndex(
+                    x => x.Code);
+
+                entity.HasOne(
+                        x => x.Category)
+                    .WithMany(
+                        x => x.MenuItems)
+                    .HasForeignKey(
+                        x => x.CategoryId)
+                    .OnDelete(
+                        DeleteBehavior.SetNull);
+            });
     }
 
     private static void ConfigureOrderTicket(ModelBuilder modelBuilder)
@@ -116,26 +158,46 @@ public class FCanteenContext(
             });
     }
 
-    private static void ConfigureIngredient(ModelBuilder modelBuilder)
+    private static void ConfigureIngredient(
+        ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Ingredient>(entity =>
-        {
-            entity.HasKey(x => x.IngredientId);
+        modelBuilder.Entity<Ingredient>(
+            entity =>
+            {
+                entity.HasKey(
+                    x => x.IngredientId);
 
-            entity.Property(x => x.Name)
-                .IsRequired()
-                .HasMaxLength(200);
+                entity.Property(
+                        x => x.Name)
+                    .IsRequired()
+                    .HasMaxLength(200);
 
-            entity.Property(x => x.Unit)
-                .IsRequired()
-                .HasMaxLength(50);
+                entity.Property(
+                        x => x.Unit)
+                    .IsRequired()
+                    .HasMaxLength(50);
 
-            entity.Property(x => x.StockQuantity)
-                .HasPrecision(18, 2);
+                entity.Property(
+                        x => x.StockQuantity)
+                    .HasPrecision(18, 2);
 
-            entity.Property(x => x.AlertThreshold)
-                .HasPrecision(18, 2);
-        });
+                entity.Property(
+                        x => x.AlertThreshold)
+                    .HasPrecision(18, 2);
+
+                entity.Property(
+                        x => x.UnitCost)
+                    .HasPrecision(18, 2);
+
+                entity.HasOne(
+                        x => x.Supplier)
+                    .WithMany(
+                        x => x.Ingredients)
+                    .HasForeignKey(
+                        x => x.SupplierId)
+                    .OnDelete(
+                        DeleteBehavior.SetNull);
+            });
     }
 
     private static void ConfigureDailySettlement(
@@ -236,129 +298,322 @@ public class FCanteenContext(
             });
     }
 
-    private static void SeedMenuItems(ModelBuilder modelBuilder)
+    private static void SeedMenuItems(
+    ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<MenuItem>().HasData(
-            new MenuItem
+        modelBuilder.Entity<MenuItem>()
+            .HasData(
+                new MenuItem
+                {
+                    MenuItemId = 1,
+                    Code = "MON-0001",
+                    Name = "Cơm gà",
+                    Price = 35000,
+                    Unit = "Phần",
+                    IsAvailable = true,
+                    CategoryId = 1
+                },
+                new MenuItem
+                {
+                    MenuItemId = 2,
+                    Code = "MON-0002",
+                    Name = "Cơm sườn",
+                    Price = 40000,
+                    Unit = "Phần",
+                    IsAvailable = true,
+                    CategoryId = 1
+                },
+                new MenuItem
+                {
+                    MenuItemId = 3,
+                    Code = "MON-0003",
+                    Name = "Cơm bò xào",
+                    Price = 45000,
+                    Unit = "Phần",
+                    IsAvailable = true,
+                    CategoryId = 1
+                },
+                new MenuItem
+                {
+                    MenuItemId = 4,
+                    Code = "MON-0004",
+                    Name = "Mì xào bò",
+                    Price = 40000,
+                    Unit = "Phần",
+                    IsAvailable = true,
+                    CategoryId = 1
+                },
+                new MenuItem
+                {
+                    MenuItemId = 5,
+                    Code = "MON-0005",
+                    Name = "Mì xào trứng",
+                    Price = 30000,
+                    Unit = "Phần",
+                    IsAvailable = true,
+                    CategoryId = 1
+                },
+                new MenuItem
+                {
+                    MenuItemId = 6,
+                    Code = "MON-0006",
+                    Name = "Bún bò",
+                    Price = 40000,
+                    Unit = "Tô",
+                    IsAvailable = true,
+                    CategoryId = 1
+                },
+                new MenuItem
+                {
+                    MenuItemId = 7,
+                    Code = "MON-0007",
+                    Name = "Phở bò",
+                    Price = 45000,
+                    Unit = "Tô",
+                    IsAvailable = true,
+                    CategoryId = 1
+                },
+                new MenuItem
+                {
+                    MenuItemId = 8,
+                    Code = "MON-0008",
+                    Name = "Bánh mì thịt",
+                    Price = 25000,
+                    Unit = "Ổ",
+                    IsAvailable = true,
+                    CategoryId = 2
+                },
+                new MenuItem
+                {
+                    MenuItemId = 9,
+                    Code = "MON-0009",
+                    Name = "Bánh mì trứng",
+                    Price = 20000,
+                    Unit = "Ổ",
+                    IsAvailable = true,
+                    CategoryId = 2
+                },
+                new MenuItem
+                {
+                    MenuItemId = 10,
+                    Code = "MON-0010",
+                    Name = "Xôi gà",
+                    Price = 30000,
+                    Unit = "Hộp",
+                    IsAvailable = true,
+                    CategoryId = 2
+                },
+                new MenuItem
+                {
+                    MenuItemId = 11,
+                    Code = "MON-0011",
+                    Name = "Nước suối",
+                    Price = 10000,
+                    Unit = "Chai",
+                    IsAvailable = true,
+                    CategoryId = 3
+                },
+                new MenuItem
+                {
+                    MenuItemId = 12,
+                    Code = "MON-0012",
+                    Name = "Coca Cola",
+                    Price = 15000,
+                    Unit = "Lon",
+                    IsAvailable = true,
+                    CategoryId = 3
+                },
+                new MenuItem
+                {
+                    MenuItemId = 13,
+                    Code = "MON-0013",
+                    Name = "Pepsi",
+                    Price = 15000,
+                    Unit = "Lon",
+                    IsAvailable = true,
+                    CategoryId = 3
+                },
+                new MenuItem
+                {
+                    MenuItemId = 14,
+                    Code = "MON-0014",
+                    Name = "Trà đào",
+                    Price = 20000,
+                    Unit = "Ly",
+                    IsAvailable = true,
+                    CategoryId = 3
+                },
+                new MenuItem
+                {
+                    MenuItemId = 15,
+                    Code = "MON-0015",
+                    Name = "Cà phê sữa",
+                    Price = 20000,
+                    Unit = "Ly",
+                    IsAvailable = true,
+                    CategoryId = 3
+                }
+            );
+    }
+
+    private static void ConfigureCategory(
+        ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Category>(
+            entity =>
             {
-                MenuItemId = 1,
-                Name = "Cơm gà",
-                Price = 35000,
-                Unit = "Phần",
-                IsAvailable = true
-            },
-            new MenuItem
+                entity.HasKey(
+                    x => x.CategoryId);
+
+                entity.Property(
+                        x => x.Name)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.HasIndex(
+                        x => x.Name)
+                    .IsUnique();
+            });
+    }
+
+    private static void ConfigureSupplier(
+        ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Supplier>(
+            entity =>
             {
-                MenuItemId = 2,
-                Name = "Cơm sườn",
-                Price = 40000,
-                Unit = "Phần",
-                IsAvailable = true
-            },
-            new MenuItem
+                entity.HasKey(
+                    x => x.SupplierId);
+
+                entity.Property(
+                        x => x.Name)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                entity.Property(
+                        x => x.Phone)
+                    .HasMaxLength(30);
+
+                entity.Property(
+                        x => x.Email)
+                    .HasMaxLength(150);
+
+                entity.Property(
+                        x => x.Address)
+                    .HasMaxLength(250);
+            });
+    }
+
+    private static void ConfigureMenuItemIngredient(
+        ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<MenuItemIngredient>(
+            entity =>
             {
-                MenuItemId = 3,
-                Name = "Cơm bò xào",
-                Price = 45000,
-                Unit = "Phần",
-                IsAvailable = true
-            },
-            new MenuItem
-            {
-                MenuItemId = 4,
-                Name = "Mì xào bò",
-                Price = 40000,
-                Unit = "Phần",
-                IsAvailable = true
-            },
-            new MenuItem
-            {
-                MenuItemId = 5,
-                Name = "Mì xào trứng",
-                Price = 30000,
-                Unit = "Phần",
-                IsAvailable = true
-            },
-            new MenuItem
-            {
-                MenuItemId = 6,
-                Name = "Bún bò",
-                Price = 40000,
-                Unit = "Tô",
-                IsAvailable = true
-            },
-            new MenuItem
-            {
-                MenuItemId = 7,
-                Name = "Phở bò",
-                Price = 45000,
-                Unit = "Tô",
-                IsAvailable = true
-            },
-            new MenuItem
-            {
-                MenuItemId = 8,
-                Name = "Bánh mì thịt",
-                Price = 25000,
-                Unit = "Ổ",
-                IsAvailable = true
-            },
-            new MenuItem
-            {
-                MenuItemId = 9,
-                Name = "Bánh mì trứng",
-                Price = 20000,
-                Unit = "Ổ",
-                IsAvailable = true
-            },
-            new MenuItem
-            {
-                MenuItemId = 10,
-                Name = "Xôi gà",
-                Price = 30000,
-                Unit = "Hộp",
-                IsAvailable = true
-            },
-            new MenuItem
-            {
-                MenuItemId = 11,
-                Name = "Nước suối",
-                Price = 10000,
-                Unit = "Chai",
-                IsAvailable = true
-            },
-            new MenuItem
-            {
-                MenuItemId = 12,
-                Name = "Coca Cola",
-                Price = 15000,
-                Unit = "Lon",
-                IsAvailable = true
-            },
-            new MenuItem
-            {
-                MenuItemId = 13,
-                Name = "Pepsi",
-                Price = 15000,
-                Unit = "Lon",
-                IsAvailable = true
-            },
-            new MenuItem
-            {
-                MenuItemId = 14,
-                Name = "Trà đào",
-                Price = 20000,
-                Unit = "Ly",
-                IsAvailable = true
-            },
-            new MenuItem
-            {
-                MenuItemId = 15,
-                Name = "Cà phê sữa",
-                Price = 20000,
-                Unit = "Ly",
-                IsAvailable = true
-            }
-        );
+                /*
+                 * Composite Primary Key.
+                 *
+                 * Một Ingredient chỉ xuất hiện
+                 * một lần trong cùng một MenuItem.
+                 */
+                entity.HasKey(
+                    x => new
+                    {
+                        x.MenuItemId,
+                        x.IngredientId
+                    });
+
+                entity.Property(
+                        x => x.Quantity)
+                    .HasPrecision(18, 4);
+
+                entity.HasOne(
+                        x => x.MenuItem)
+                    .WithMany(
+                        x => x.MenuItemIngredients)
+                    .HasForeignKey(
+                        x => x.MenuItemId)
+                    .OnDelete(
+                        DeleteBehavior.Cascade);
+
+                entity.HasOne(
+                        x => x.Ingredient)
+                    .WithMany(
+                        x => x.MenuItemIngredients)
+                    .HasForeignKey(
+                        x => x.IngredientId)
+                    .OnDelete(
+                        DeleteBehavior.Cascade);
+            });
+    }
+
+    private static void SeedCategories(
+    ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Category>()
+            .HasData(
+                new Category
+                {
+                    CategoryId = 1,
+                    Name = "Món chính"
+                },
+                new Category
+                {
+                    CategoryId = 2,
+                    Name = "Món phụ"
+                },
+                new Category
+                {
+                    CategoryId = 3,
+                    Name = "Đồ uống"
+                },
+                new Category
+                {
+                    CategoryId = 4,
+                    Name = "Tráng miệng"
+                });
+    }
+
+    private static void SeedSuppliers(
+    ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Supplier>()
+            .HasData(
+                new Supplier
+                {
+                    SupplierId = 1,
+                    Name =
+                        "Nhà cung cấp Thực phẩm Đà Nẵng",
+                    Phone =
+                        "0900000001",
+                    Email =
+                        "food@fcanteen.local",
+                    Address =
+                        "Đà Nẵng"
+                },
+                new Supplier
+                {
+                    SupplierId = 2,
+                    Name =
+                        "Nhà cung cấp Rau sạch",
+                    Phone =
+                        "0900000002",
+                    Email =
+                        "vegetable@fcanteen.local",
+                    Address =
+                        "Đà Nẵng"
+                },
+                new Supplier
+                {
+                    SupplierId = 3,
+                    Name =
+                        "Nhà cung cấp Đồ uống",
+                    Phone =
+                        "0900000003",
+                    Email =
+                        "drink@fcanteen.local",
+                    Address =
+                        "Đà Nẵng"
+                });
     }
 }
