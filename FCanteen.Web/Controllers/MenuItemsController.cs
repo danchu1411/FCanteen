@@ -31,15 +31,96 @@ public class MenuItemsController
      * INDEX
      */
     public async Task<IActionResult> Index(
-        CancellationToken cancellationToken)
+    string? searchTerm = null,
+    int? categoryId = null,
+    bool? isAvailable = null,
+    string? sortBy = null,
+    int page = 1,
+    CancellationToken cancellationToken =
+        default)
     {
-        var menuItems =
+        const int pageSize =
+            5;
+
+        /*
+         * Chỉ chấp nhận 4 kiểu sort
+         * mà YC3 yêu cầu.
+         */
+        sortBy =
+            sortBy switch
+            {
+                "name_desc" =>
+                    "name_desc",
+
+                "price_asc" =>
+                    "price_asc",
+
+                "price_desc" =>
+                    "price_desc",
+
+                _ =>
+                    "name_asc"
+            };
+
+        var result =
             await _menuItemRepository
+                .SearchAsync(
+                    searchTerm,
+                    categoryId,
+                    isAvailable,
+                    sortBy,
+                    page,
+                    pageSize,
+                    cancellationToken);
+
+        var categories =
+            await _categoryRepository
                 .GetAllAsync(
                     cancellationToken);
 
+        var model =
+            new MenuItemIndexViewModel
+            {
+                MenuItems =
+                    result.Items,
+
+                Categories =
+                    categories,
+
+                SearchTerm =
+                    searchTerm,
+
+                CategoryId =
+                    categoryId,
+
+                IsAvailable =
+                    isAvailable,
+
+                SortBy =
+                    sortBy,
+
+                Page =
+                    result.Page,
+
+                PageSize =
+                    result.PageSize,
+
+                TotalCount =
+                    result.TotalCount,
+
+                TotalPages =
+                    result.TotalPages
+            };
+
+        /*
+         * Dùng ViewData có chủ đích.
+         */
+        ViewData["ResultSummary"] =
+            $"Tìm thấy " +
+            $"{result.TotalCount} món.";
+
         return View(
-            menuItems);
+            model);
     }
 
     /*

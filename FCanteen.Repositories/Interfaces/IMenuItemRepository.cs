@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using FCanteen.Repositories.Models;
 using FCanteen.Data.Entities;
 
 namespace FCanteen.Repositories.Interfaces;
@@ -56,4 +57,15 @@ public interface IMenuItemRepository
         int menuItemId,
         CancellationToken cancellationToken =
         default);
+
+    Task<PagedResult<MenuItem>>
+        SearchAsync(
+            string? searchTerm,
+            int? categoryId,
+            bool? isAvailable,
+            string sortBy,
+            int page,
+            int pageSize,
+            CancellationToken cancellationToken =
+                default);
 }

@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using FCanteen.Data;
 using FCanteen.Data.Entities;
 using FCanteen.Repositories.Interfaces;
+using FCanteen.Repositories.Models;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace FCanteen.Repositories.Implementations;
@@ -184,5 +186,166 @@ public class MenuItemRepository
                     x.MenuItemId ==
                     menuItemId,
                 cancellationToken);
+    }
+
+    public async Task<PagedResult<MenuItem>>
+        SearchAsync(
+            string? searchTerm,
+            int? categoryId,
+            bool? isAvailable,
+            string sortBy,
+            int page,
+            int pageSize,
+            CancellationToken cancellationToken =
+                default)
+    {
+        page =
+            Math.Max(
+                page,
+                1);
+
+        pageSize =
+            Math.Clamp(
+                pageSize,
+                1,
+                100);
+
+        var query =
+            _db.MenuItems
+                .AsNoTracking()
+                .Include(x =>
+                    x.Category)
+                .AsQueryable();
+
+        /*
+         * SEARCH:
+         * tìm cả Name và Code.
+         */
+        if (!string.IsNullOrWhiteSpace(
+            searchTerm))
+        {
+            var keyword =
+                searchTerm.Trim();
+
+            query =
+                query.Where(x =>
+                    x.Name.Contains(
+                        keyword)
+                    ||
+                    x.Code.Contains(
+                        keyword));
+        }
+
+        /*
+         * FILTER CATEGORY.
+         */
+        if (categoryId.HasValue)
+        {
+            query =
+                query.Where(x =>
+                    x.CategoryId ==
+                    categoryId.Value);
+        }
+
+        /*
+         * FILTER AVAILABILITY.
+         *
+         * null  = tất cả
+         * true  = còn bán
+         * false = ngừng bán
+         */
+        if (isAvailable.HasValue)
+        {
+            query =
+                query.Where(x =>
+                    x.IsAvailable ==
+                    isAvailable.Value);
+        }
+
+        /*
+         * Count phải thực hiện
+         * SAU filter nhưng TRƯỚC paging.
+         */
+        var totalCount =
+            await query.CountAsync(
+                cancellationToken);
+
+        var totalPages =
+            totalCount == 0
+                ? 0
+                : (int)Math.Ceiling(
+                    (double)totalCount /
+                    pageSize);
+
+        /*
+         * Nếu user nhập thủ công
+         * ?page=999 thì đưa về trang cuối.
+         */
+        if (totalPages > 0 &&
+            page > totalPages)
+        {
+            page =
+                totalPages;
+        }
+
+        /*
+         * SORT.
+         */
+        query =
+            sortBy switch
+            {
+                "name_desc" =>
+                    query
+                        .OrderByDescending(
+                            x => x.Name)
+                        .ThenBy(
+                            x => x.MenuItemId),
+
+                "price_asc" =>
+                    query
+                        .OrderBy(
+                            x => x.Price)
+                        .ThenBy(
+                            x => x.MenuItemId),
+
+                "price_desc" =>
+                    query
+                        .OrderByDescending(
+                            x => x.Price)
+                        .ThenBy(
+                            x => x.MenuItemId),
+
+                _ =>
+                    query
+                        .OrderBy(
+                            x => x.Name)
+                        .ThenBy(
+                            x => x.MenuItemId)
+            };
+
+        var items =
+            await query
+                .Skip(
+                    (page - 1) *
+                    pageSize)
+                .Take(
+                    pageSize)
+                .ToListAsync(
+                    cancellationToken);
+
+        return new PagedResult<MenuItem>
+        {
+            Items =
+                items,
+
+            TotalCount =
+                totalCount,
+
+            Page =
+                page,
+
+            PageSize =
+                pageSize
+        };
     }
 }
