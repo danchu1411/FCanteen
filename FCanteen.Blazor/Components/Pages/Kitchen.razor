@@ -3,9 +3,13 @@
 
 @using FCanteen.Data
 @using FCanteen.Data.Entities
+@using FCanteen.Blazor.Services
 @using Microsoft.EntityFrameworkCore
 
 @inject IDbContextFactory<FCanteenContext> DbFactory
+@inject OrderStatusService OrderStatusService
+
+@implements IDisposable
 
 <PageTitle>Kitchen</PageTitle>
 
@@ -18,11 +22,53 @@
 
         @foreach (var order in waitingOrders)
         {
-            <div class="card mb-3">
+            <div class="card mb-3 @(IsOverdue(order) ? "border-danger bg-danger-subtle" : "")">
                 <div class="card-body">
-                    <strong>Đơn #@order.OrderTicketId</strong>
-                    <div>Quầy: @order.CounterName</div>
-                    <div>@order.CreatedAt.ToString("HH:mm:ss")</div>
+                    <h5>Đơn #@order.OrderTicketId</h5>
+
+                    <div>
+                        <strong>Quầy:</strong>
+                        @order.CounterName
+                    </div>
+
+                    <div>
+                        <strong>Thời gian chờ:</strong>
+                        @GetElapsed(order.CreatedAt)
+                    </div>
+
+                    <hr />
+
+                    <strong>Món:</strong>
+
+                    <ul class="mb-2">
+                        @foreach (var line in order.TicketLines)
+                        {
+                            <li>
+                                @line.MenuItem.Name
+                                x @line.Quantity
+
+                                @if (!string.IsNullOrWhiteSpace(line.Note))
+                                {
+                                    <span class="text-muted">
+                                        — @line.Note
+                                    </span>
+                                }
+                            </li>
+                        }
+                    </ul>
+
+                    @if (IsOverdue(order))
+                    {
+                        <div class="text-danger fw-bold">
+                            ⚠ Đơn đã chờ quá 10 phút
+                        </div>
+                    }
+                    <button class="btn btn-primary mt-2"
+                            @onclick="() => ChangeStatusAsync(
+                                    order.OrderTicketId,
+                                    OrderStatuses.Preparing)">
+                        Bắt đầu chế biến
+                    </button>
                 </div>
             </div>
         }
@@ -38,6 +84,12 @@
                     <strong>Đơn #@order.OrderTicketId</strong>
                     <div>Quầy: @order.CounterName</div>
                     <div>@order.CreatedAt.ToString("HH:mm:ss")</div>
+                    <button class="btn btn-warning mt-2"
+                            @onclick="() => ChangeStatusAsync(
+                                    order.OrderTicketId,
+                                    OrderStatuses.Ready)">
+                        Đánh dấu sẵn sàng
+                    </button>
                 </div>
             </div>
         }
@@ -53,6 +105,12 @@
                     <strong>Đơn #@order.OrderTicketId</strong>
                     <div>Quầy: @order.CounterName</div>
                     <div>@order.CreatedAt.ToString("HH:mm:ss")</div>
+                    <button class="btn btn-success mt-2"
+                            @onclick="() => ChangeStatusAsync(
+                                    order.OrderTicketId,
+                                    OrderStatuses.Delivered)">
+                        Đã giao
+                    </button>
                 </div>
             </div>
         }
@@ -64,10 +122,17 @@
     private List<OrderTicket> waitingOrders = [];
     private List<OrderTicket> preparingOrders = [];
     private List<OrderTicket> readyOrders = [];
+    private System.Threading.Timer? _timer;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadOrdersAsync();
+
+        _timer = new System.Threading.Timer(
+            _ => _ = RefreshAsync(),
+            null,
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromSeconds(5));
     }
 
     private async Task LoadOrdersAsync()
@@ -101,5 +166,51 @@
             orders
                 .Where(x => x.Status == OrderStatuses.Ready)
                 .ToList();
+    }
+
+    private async Task ChangeStatusAsync(
+    int orderId,
+    string newStatus)
+    {
+        var changed =
+            await OrderStatusService.ChangeStatusAsync(
+                orderId,
+                newStatus,
+                "Kitchen");
+
+        if (changed)
+        {
+            await LoadOrdersAsync();
+        }
+    }
+
+    private async Task RefreshAsync()
+    {
+        await InvokeAsync(
+            async () =>
+            {
+                await LoadOrdersAsync();
+                StateHasChanged();
+            });
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+
+    private static bool IsOverdue(OrderTicket order)
+    {
+        return DateTime.Now - order.CreatedAt >
+               TimeSpan.FromMinutes(10);
+    }
+
+    private static string GetElapsed(DateTime createdAt)
+    {
+        var elapsed = DateTime.Now - createdAt;
+
+        return elapsed.TotalHours >= 1
+            ? $"{(int)elapsed.TotalHours} giờ {elapsed.Minutes} phút"
+            : $"{elapsed.Minutes} phút {elapsed.Seconds} giây";
     }
 }
