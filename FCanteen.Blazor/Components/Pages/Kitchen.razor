@@ -79,11 +79,47 @@
 
         @foreach (var order in preparingOrders)
         {
-            <div class="card mb-3">
+            <div class="card mb-3 @(IsOverdue(order) ? "border-danger bg-danger-subtle" : "")">
                 <div class="card-body">
-                    <strong>Đơn #@order.OrderTicketId</strong>
-                    <div>Quầy: @order.CounterName</div>
-                    <div>@order.CreatedAt.ToString("HH:mm:ss")</div>
+                    <h5>Đơn #@order.OrderTicketId</h5>
+
+                    <div>
+                        <strong>Quầy:</strong>
+                        @order.CounterName
+                    </div>
+
+                    <div>
+                        <strong>Thời gian chờ:</strong>
+                        @GetElapsed(order.CreatedAt)
+                    </div>
+
+                    <hr />
+
+                    <strong>Món:</strong>
+
+                    <ul class="mb-2">
+                        @foreach (var line in order.TicketLines)
+                        {
+                            <li>
+                                @line.MenuItem.Name
+                                x @line.Quantity
+
+                                @if (!string.IsNullOrWhiteSpace(line.Note))
+                                {
+                                    <span class="text-muted">
+                                        — @line.Note
+                                    </span>
+                                }
+                            </li>
+                        }
+                    </ul>
+
+                    @if (IsOverdue(order))
+                    {
+                        <div class="text-danger fw-bold">
+                            ⚠ Đơn đã chờ quá 10 phút
+                        </div>
+                    }
                     <!-- Preparing -->
                     <button class="btn btn-warning mt-2"
                             @onclick="() => ChangeStatusAsync(
@@ -101,11 +137,47 @@
 
         @foreach (var order in readyOrders)
         {
-            <div class="card mb-3">
+            <div class="card mb-3 @(IsOverdue(order) ? "border-danger bg-danger-subtle" : "")">
                 <div class="card-body">
-                    <strong>Đơn #@order.OrderTicketId</strong>
-                    <div>Quầy: @order.CounterName</div>
-                    <div>@order.CreatedAt.ToString("HH:mm:ss")</div>
+                    <h5>Đơn #@order.OrderTicketId</h5>
+
+                    <div>
+                        <strong>Quầy:</strong>
+                        @order.CounterName
+                    </div>
+
+                    <div>
+                        <strong>Thời gian chờ:</strong>
+                        @GetElapsed(order.CreatedAt)
+                    </div>
+
+                    <hr />
+
+                    <strong>Món:</strong>
+
+                    <ul class="mb-2">
+                        @foreach (var line in order.TicketLines)
+                        {
+                            <li>
+                                @line.MenuItem.Name
+                                x @line.Quantity
+
+                                @if (!string.IsNullOrWhiteSpace(line.Note))
+                                {
+                                    <span class="text-muted">
+                                        — @line.Note
+                                    </span>
+                                }
+                            </li>
+                        }
+                    </ul>
+
+                    @if (IsOverdue(order))
+                    {
+                        <div class="text-danger fw-bold">
+                            ⚠ Đơn đã chờ quá 10 phút
+                        </div>
+                    }
                     <!-- Ready -->
                     <button class="btn btn-success mt-2"
                             @onclick="() => ChangeStatusAsync(
