@@ -1,0 +1,455 @@
+﻿@page "/menu-admin"
+@rendermode InteractiveServer
+
+@using FCanteen.Blazor.Models
+@using FCanteen.Blazor.Services
+@using FCanteen.Data.Entities
+
+@inject MenuAdminService MenuAdminService
+@inject IJSRuntime JS
+
+<PageTitle>Menu Admin</PageTitle>
+
+<h1>Quản lý thực đơn</h1>
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">
+        @errorMessage
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <div class="alert alert-success">
+        @successMessage
+    </div>
+}
+
+<div class="row">
+
+    <div class="col-md-4">
+
+        <h4>
+            @(form.MenuItemId == 0
+                ? "Thêm món"
+                : "Cập nhật món")
+        </h4>
+
+        <EditForm Model="@form"
+                  OnValidSubmit="SaveAsync">
+
+            <DataAnnotationsValidator />
+
+            <div class="mb-3">
+                <label class="form-label">
+                    Mã món
+                </label>
+
+                <InputText class="form-control"
+                           @bind-Value="form.Code" />
+
+                <ValidationMessage
+                    For="@(() => form.Code)" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">
+                    Tên món
+                </label>
+
+                <InputText class="form-control"
+                           @bind-Value="form.Name" />
+
+                <ValidationMessage
+                    For="@(() => form.Name)" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">
+                    Giá bán
+                </label>
+
+                <InputNumber class="form-control"
+                             @bind-Value="form.Price" />
+
+                <ValidationMessage
+                    For="@(() => form.Price)" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">
+                    Đơn vị
+                </label>
+
+                <InputText class="form-control"
+                           @bind-Value="form.Unit" />
+
+                <ValidationMessage
+                    For="@(() => form.Unit)" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">
+                    Nhóm món
+                </label>
+
+                <InputSelect class="form-select"
+                             @bind-Value="form.CategoryId">
+
+                    <option value="">
+                        -- Chọn nhóm món --
+                    </option>
+
+                    @foreach (var category in categories)
+                    {
+                        <option value="@category.CategoryId">
+                            @category.Name
+                        </option>
+                    }
+
+                </InputSelect>
+
+                <ValidationMessage
+                    For="@(() => form.CategoryId)" />
+            </div>
+
+            <div class="form-check mb-3">
+
+                <InputCheckbox
+                    class="form-check-input"
+                    @bind-Value="form.IsAvailable" />
+
+                <label class="form-check-label">
+                    Còn bán
+                </label>
+
+            </div>
+
+            <button type="submit"
+                    class="btn btn-primary">
+                @(form.MenuItemId == 0
+                    ? "Thêm món"
+                    : "Lưu thay đổi")
+            </button>
+
+            @if (form.MenuItemId != 0)
+            {
+                <button type="button"
+                        class="btn btn-secondary ms-2"
+                        @onclick="ResetForm">
+                    Huỷ
+                </button>
+            }
+
+        </EditForm>
+    </div>
+
+    <div class="col-md-8">
+
+        <div class="d-flex justify-content-between
+                    align-items-center mb-3">
+
+            <h4>Danh sách món</h4>
+
+            <button type="button"
+                    class="btn btn-success"
+                    @onclick="ResetForm">
+                + Thêm mới
+            </button>
+
+        </div>
+
+        <input class="form-control mb-3"
+               placeholder="Tìm theo mã hoặc tên món..."
+               @bind="searchText"
+               @bind:event="oninput" />
+
+        <table class="table table-bordered
+                      table-hover align-middle">
+
+            <thead>
+                <tr>
+                    <th>Mã</th>
+                    <th>Tên món</th>
+                    <th>Nhóm</th>
+                    <th>Giá</th>
+                    <th>Đơn vị</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                @foreach (var item in FilteredItems)
+                {
+                    <tr>
+                        <td>@item.Code</td>
+
+                        <td>@item.Name</td>
+
+                        <td>
+                            @(item.Category?.Name ?? "-")
+                        </td>
+
+                        <td>
+                            @item.Price.ToString("N0") đ
+                        </td>
+
+                        <td>@item.Unit</td>
+
+                        <td>
+                            @if (item.IsAvailable)
+                            {
+                                <span class="badge bg-success">
+                                    Còn bán
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">
+                                    Ngừng bán
+                                </span>
+                            }
+                        </td>
+
+                        <td class="text-nowrap">
+
+                            <button type="button"
+                                    class="btn btn-sm btn-primary"
+                                    @onclick="() => EditAsync(
+                                        item.MenuItemId)">
+                                Sửa
+                            </button>
+
+                            <button type="button"
+                                    class="btn btn-sm btn-warning ms-1"
+                                    @onclick="() => ToggleAsync(
+                                        item.MenuItemId)">
+
+                                @(item.IsAvailable
+                                    ? "Ngừng bán"
+                                    : "Mở bán")
+
+                            </button>
+
+                            <button type="button"
+                                    class="btn btn-sm btn-danger ms-1"
+                                    @onclick="() => DeleteAsync(item)">
+                                Xoá
+                            </button>
+
+                        </td>
+                    </tr>
+                }
+
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+@code {
+    private List<MenuItem> menuItems = [];
+    private List<Category> categories = [];
+
+    private MenuItemFormModel form = new();
+
+    private string searchText = string.Empty;
+
+    private string? errorMessage;
+    private string? successMessage;
+
+    private IEnumerable<MenuItem> FilteredItems
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(
+                searchText))
+            {
+                return menuItems;
+            }
+
+            var keyword =
+                searchText.Trim();
+
+            return menuItems.Where(
+                x =>
+                    x.Code.Contains(
+                        keyword,
+                        StringComparison.OrdinalIgnoreCase)
+                    ||
+                    x.Name.Contains(
+                        keyword,
+                        StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        categories =
+            await MenuAdminService
+                .GetCategoriesAsync();
+
+        await LoadItemsAsync();
+    }
+
+    private async Task LoadItemsAsync()
+    {
+        menuItems =
+            await MenuAdminService
+                .GetAllAsync();
+    }
+
+    private async Task SaveAsync()
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        var editing =
+            form.MenuItemId != 0;
+
+        var result =
+            await MenuAdminService
+                .SaveAsync(form);
+
+        if (!result.Success)
+        {
+            errorMessage =
+                result.Error;
+
+            return;
+        }
+
+        successMessage =
+            editing
+                ? "Cập nhật món thành công."
+                : "Thêm món thành công.";
+
+        ResetForm();
+
+        await LoadItemsAsync();
+    }
+
+    private async Task EditAsync(
+        int id)
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        var item =
+            await MenuAdminService
+                .GetByIdAsync(id);
+
+        if (item is null)
+        {
+            errorMessage =
+                "Không tìm thấy món ăn.";
+
+            return;
+        }
+
+        form =
+            new MenuItemFormModel
+            {
+                MenuItemId =
+                    item.MenuItemId,
+
+                Code =
+                    item.Code,
+
+                Name =
+                    item.Name,
+
+                Price =
+                    item.Price,
+
+                Unit =
+                    item.Unit,
+
+                IsAvailable =
+                    item.IsAvailable,
+
+                CategoryId =
+                    item.CategoryId
+            };
+    }
+
+    private async Task ToggleAsync(
+        int id)
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        var changed =
+            await MenuAdminService
+                .ToggleAvailabilityAsync(id);
+
+        if (!changed)
+        {
+            errorMessage =
+                "Không tìm thấy món ăn.";
+
+            return;
+        }
+
+        successMessage =
+            "Đã cập nhật trạng thái còn bán.";
+
+        await LoadItemsAsync();
+    }
+
+    private async Task DeleteAsync(
+        MenuItem item)
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        var confirmed =
+            await JS.InvokeAsync<bool>(
+                "confirm",
+                $"Bạn có chắc muốn xoá " +
+                $"{item.Code} - {item.Name}?");
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result =
+            await MenuAdminService
+                .DeleteAsync(
+                    item.MenuItemId);
+
+        if (!result.Success)
+        {
+            errorMessage =
+                result.Error;
+
+            return;
+        }
+
+        successMessage =
+            "Đã xoá món thành công.";
+
+        if (form.MenuItemId ==
+            item.MenuItemId)
+        {
+            ResetForm();
+        }
+
+        await LoadItemsAsync();
+    }
+
+    private void ResetForm()
+    {
+        form =
+            new MenuItemFormModel
+            {
+                IsAvailable = true
+            };
+
+        errorMessage = null;
+    }
+}

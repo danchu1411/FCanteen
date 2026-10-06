@@ -21,6 +21,7 @@ namespace FCanteen.Blazor
                     options.UseSqlServer(connectionString));
 
             builder.Services.AddScoped<OrderStatusService>();
+            builder.Services.AddScoped<MenuAdminService>();
 
             // Add services to the container.
             builder.Services.AddRazorComponents()
