@@ -3,6 +3,7 @@
     <File Path=".gitignore" />
   </Folder>
   <Project Path="FCanteen.Analytics/FCanteen.Analytics.csproj" Id="8bed6713-44c4-4c97-8efd-06989eb548df" />
+  <Project Path="FCanteen.Blazor/FCanteen.Blazor.csproj" Id="6ae28b6c-d3e2-4b0d-853a-f82a51a1a5c0" />
   <Project Path="FCanteen.ConsoleApp/FCanteen.ConsoleApp.csproj" Id="ae39b1ca-68e6-4e47-8590-4365a8621de9" />
   <Project Path="FCanteen.Data/FCanteen.Data.csproj" />
   <Project Path="FCanteen.KitchenServer/FCanteen.KitchenServer.csproj" />

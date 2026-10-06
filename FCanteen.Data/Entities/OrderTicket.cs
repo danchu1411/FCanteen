@@ -18,8 +18,11 @@ public class OrderTicket
 
     public string BranchCode { get; set; } = "BR01";
 
-    public string Status { get; set; } = "Waiting";
+    public string Status { get; set; } = OrderStatuses.Waiting;
 
     public ICollection<TicketLine> TicketLines { get; set; }
         = [];
+
+    public ICollection<OrderStatusHistory> StatusHistories { get; set; }
+    = [];
 }

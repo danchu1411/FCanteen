@@ -18,6 +18,9 @@ public class FCanteenContext(
 
     public DbSet<DailySettlement> DailySettlements => Set<DailySettlement>();
 
+    public DbSet<OrderStatusHistory> OrderStatusHistories =>
+    Set<OrderStatusHistory>();
+
     public DbSet<Staff> Staffs => Set<Staff>();
 
     public DbSet<DiscountPolicyLog>
@@ -46,6 +49,7 @@ public class FCanteenContext(
 
         ConfigureOrderTicket(modelBuilder);
         ConfigureTicketLine(modelBuilder);
+        ConfigureOrderStatusHistory(modelBuilder);
         ConfigureDeviceLog(modelBuilder);
         ConfigureDailySettlement(modelBuilder);
         ConfigureStaff(modelBuilder);
@@ -98,6 +102,41 @@ public class FCanteenContext(
                         x => x.CategoryId)
                     .OnDelete(
                         DeleteBehavior.SetNull);
+            });
+    }
+
+    private static void ConfigureOrderStatusHistory(
+    ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<OrderStatusHistory>(
+            entity =>
+            {
+                entity.HasKey(
+                    x => x.OrderStatusHistoryId);
+
+                entity.Property(
+                        x => x.OldStatus)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(
+                        x => x.NewStatus)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(
+                        x => x.ChangedBy)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.HasOne(
+                        x => x.OrderTicket)
+                    .WithMany(
+                        x => x.StatusHistories)
+                    .HasForeignKey(
+                        x => x.OrderTicketId)
+                    .OnDelete(
+                        DeleteBehavior.Cascade);
             });
     }
 
