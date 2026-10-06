@@ -1,0 +1,43 @@
+﻿@using FCanteen.Data
+
+<span class="badge @CssClass">
+    @DisplayText
+</span>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Status { get; set; } = string.Empty;
+
+    private string DisplayText =>
+        Status switch
+        {
+            OrderStatuses.Waiting => "Chờ tiếp nhận",
+            OrderStatuses.Preparing => "Đang chế biến",
+            OrderStatuses.Ready => "Sẵn sàng",
+            OrderStatuses.Delivered => "Đã giao",
+            OrderStatuses.Cancelled => "Đã huỷ",
+            _ => Status
+        };
+
+    private string CssClass =>
+        Status switch
+        {
+            OrderStatuses.Waiting =>
+                "bg-secondary",
+
+            OrderStatuses.Preparing =>
+                "bg-warning text-dark",
+
+            OrderStatuses.Ready =>
+                "bg-success",
+
+            OrderStatuses.Delivered =>
+                "bg-primary",
+
+            OrderStatuses.Cancelled =>
+                "bg-danger",
+
+            _ =>
+                "bg-dark"
+        };
+}

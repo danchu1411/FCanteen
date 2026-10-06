@@ -1,0 +1,57 @@
+﻿@implements IDisposable
+
+<span>@ElapsedText</span>
+
+@code {
+    [Parameter, EditorRequired]
+    public DateTime CreatedAt { get; set; }
+
+    private System.Threading.Timer? _timer;
+
+    protected override void OnInitialized()
+    {
+        _timer = new System.Threading.Timer(
+            _ => _ = InvokeAsync(StateHasChanged),
+            null,
+            TimeSpan.FromSeconds(1),
+            TimeSpan.FromSeconds(1));
+    }
+
+    private string ElapsedText
+    {
+        get
+        {
+            var elapsed =
+                DateTime.Now - CreatedAt;
+
+            if (elapsed < TimeSpan.Zero)
+            {
+                elapsed = TimeSpan.Zero;
+            }
+
+            if (elapsed.TotalDays >= 1)
+            {
+                return
+                    $"{(int)elapsed.TotalDays} ngày " +
+                    $"{elapsed.Hours} giờ " +
+                    $"{elapsed.Minutes} phút";
+            }
+
+            if (elapsed.TotalHours >= 1)
+            {
+                return
+                    $"{(int)elapsed.TotalHours} giờ " +
+                    $"{elapsed.Minutes} phút";
+            }
+
+            return
+                $"{elapsed.Minutes} phút " +
+                $"{elapsed.Seconds} giây";
+        }
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}

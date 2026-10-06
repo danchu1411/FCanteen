@@ -18,176 +18,48 @@
 <div class="row g-3">
 
     <div class="col-md-4">
-        <h3>Chờ tiếp nhận (@waitingOrders.Count)</h3>
+
+        <h3>
+            Chờ tiếp nhận
+            (@waitingOrders.Count)
+        </h3>
 
         @foreach (var order in waitingOrders)
         {
-            <div class="card mb-3 @(IsOverdue(order) ? "border-danger bg-danger-subtle" : "")">
-                <div class="card-body">
-                    <h5>Đơn #@order.OrderTicketId</h5>
-
-                    <div>
-                        <strong>Quầy:</strong>
-                        @order.CounterName
-                    </div>
-
-                    <div>
-                        <strong>Thời gian chờ:</strong>
-                        @GetElapsed(order.CreatedAt)
-                    </div>
-
-                    <hr />
-
-                    <strong>Món:</strong>
-
-                    <ul class="mb-2">
-                        @foreach (var line in order.TicketLines)
-                        {
-                            <li>
-                                @line.MenuItem.Name
-                                x @line.Quantity
-
-                                @if (!string.IsNullOrWhiteSpace(line.Note))
-                                {
-                                    <span class="text-muted">
-                                        — @line.Note
-                                    </span>
-                                }
-                            </li>
-                        }
-                    </ul>
-
-                    @if (IsOverdue(order))
-                    {
-                        <div class="text-danger fw-bold">
-                            ⚠ Đơn đã chờ quá 10 phút
-                        </div>
-                    }
-                    <button class="btn btn-primary mt-2"
-                            @onclick="() => ChangeStatusAsync(
-                                    order.OrderTicketId,
-                                    OrderStatuses.Preparing)">
-                        Bắt đầu chế biến
-                    </button>
-                </div>
-            </div>
+            <OrderCard Order="@order"
+                       OnStatusChanged="HandleStatusChangedAsync" />
         }
+
     </div>
 
     <div class="col-md-4">
-        <h3>Đang chế biến (@preparingOrders.Count)</h3>
+
+        <h3>
+            Đang chế biến
+            (@preparingOrders.Count)
+        </h3>
 
         @foreach (var order in preparingOrders)
         {
-            <div class="card mb-3 @(IsOverdue(order) ? "border-danger bg-danger-subtle" : "")">
-                <div class="card-body">
-                    <h5>Đơn #@order.OrderTicketId</h5>
-
-                    <div>
-                        <strong>Quầy:</strong>
-                        @order.CounterName
-                    </div>
-
-                    <div>
-                        <strong>Thời gian chờ:</strong>
-                        @GetElapsed(order.CreatedAt)
-                    </div>
-
-                    <hr />
-
-                    <strong>Món:</strong>
-
-                    <ul class="mb-2">
-                        @foreach (var line in order.TicketLines)
-                        {
-                            <li>
-                                @line.MenuItem.Name
-                                x @line.Quantity
-
-                                @if (!string.IsNullOrWhiteSpace(line.Note))
-                                {
-                                    <span class="text-muted">
-                                        — @line.Note
-                                    </span>
-                                }
-                            </li>
-                        }
-                    </ul>
-
-                    @if (IsOverdue(order))
-                    {
-                        <div class="text-danger fw-bold">
-                            ⚠ Đơn đã chờ quá 10 phút
-                        </div>
-                    }
-                    <!-- Preparing -->
-                    <button class="btn btn-warning mt-2"
-                            @onclick="() => ChangeStatusAsync(
-                                    order.OrderTicketId,
-                                    OrderStatuses.Ready)">
-                        Đánh dấu sẵn sàng
-                    </button>
-                </div>
-            </div>
+            <OrderCard Order="@order"
+                       OnStatusChanged="HandleStatusChangedAsync" />
         }
+
     </div>
 
     <div class="col-md-4">
-        <h3>Sẵn sàng (@readyOrders.Count)</h3>
+
+        <h3>
+            Sẵn sàng
+            (@readyOrders.Count)
+        </h3>
 
         @foreach (var order in readyOrders)
         {
-            <div class="card mb-3 @(IsOverdue(order) ? "border-danger bg-danger-subtle" : "")">
-                <div class="card-body">
-                    <h5>Đơn #@order.OrderTicketId</h5>
-
-                    <div>
-                        <strong>Quầy:</strong>
-                        @order.CounterName
-                    </div>
-
-                    <div>
-                        <strong>Thời gian chờ:</strong>
-                        @GetElapsed(order.CreatedAt)
-                    </div>
-
-                    <hr />
-
-                    <strong>Món:</strong>
-
-                    <ul class="mb-2">
-                        @foreach (var line in order.TicketLines)
-                        {
-                            <li>
-                                @line.MenuItem.Name
-                                x @line.Quantity
-
-                                @if (!string.IsNullOrWhiteSpace(line.Note))
-                                {
-                                    <span class="text-muted">
-                                        — @line.Note
-                                    </span>
-                                }
-                            </li>
-                        }
-                    </ul>
-
-                    @if (IsOverdue(order))
-                    {
-                        <div class="text-danger fw-bold">
-                            ⚠ Đơn đã chờ quá 10 phút
-                        </div>
-                    }
-                    <!-- Ready -->
-                    <button class="btn btn-success mt-2"
-                            @onclick="() => ChangeStatusAsync(
-                                    order.OrderTicketId,
-                                    OrderStatuses.Delivered)">
-                        Đã giao
-                    </button>
-                </div>
-            </div>
+            <OrderCard Order="@order"
+                       OnStatusChanged="HandleStatusChangedAsync" />
         }
+
     </div>
 
 </div>
@@ -196,6 +68,7 @@
     private List<OrderTicket> waitingOrders = [];
     private List<OrderTicket> preparingOrders = [];
     private List<OrderTicket> readyOrders = [];
+
     private System.Threading.Timer? _timer;
 
     protected override async Task OnInitializedAsync()
@@ -228,29 +101,70 @@
 
         waitingOrders =
             orders
-                .Where(x => x.Status == OrderStatuses.Waiting)
+                .Where(x =>
+                    x.Status ==
+                    OrderStatuses.Waiting)
                 .ToList();
 
         preparingOrders =
             orders
-                .Where(x => x.Status == OrderStatuses.Preparing)
+                .Where(x =>
+                    x.Status ==
+                    OrderStatuses.Preparing)
                 .ToList();
 
         readyOrders =
             orders
-                .Where(x => x.Status == OrderStatuses.Ready)
+                .Where(x =>
+                    x.Status ==
+                    OrderStatuses.Ready)
                 .ToList();
     }
 
-    private async Task ChangeStatusAsync(
-    int orderId,
-    string newStatus)
+    private async Task HandleStatusChangedAsync(
+        int orderId)
     {
+        var order =
+            waitingOrders
+                .Concat(preparingOrders)
+                .Concat(readyOrders)
+                .FirstOrDefault(
+                    x =>
+                        x.OrderTicketId ==
+                        orderId);
+
+        if (order is null)
+        {
+            return;
+        }
+
+        string? newStatus =
+            order.Status switch
+            {
+                OrderStatuses.Waiting =>
+                    OrderStatuses.Preparing,
+
+                OrderStatuses.Preparing =>
+                    OrderStatuses.Ready,
+
+                OrderStatuses.Ready =>
+                    OrderStatuses.Delivered,
+
+                _ =>
+                    null
+            };
+
+        if (newStatus is null)
+        {
+            return;
+        }
+
         var changed =
-            await OrderStatusService.ChangeStatusAsync(
-                orderId,
-                newStatus,
-                "Kitchen");
+            await OrderStatusService
+                .ChangeStatusAsync(
+                    orderId,
+                    newStatus,
+                    "Kitchen");
 
         if (changed)
         {
@@ -264,6 +178,7 @@
             async () =>
             {
                 await LoadOrdersAsync();
+
                 StateHasChanged();
             });
     }
@@ -271,20 +186,5 @@
     public void Dispose()
     {
         _timer?.Dispose();
-    }
-
-    private static bool IsOverdue(OrderTicket order)
-    {
-        return DateTime.Now - order.CreatedAt >
-               TimeSpan.FromMinutes(10);
-    }
-
-    private static string GetElapsed(DateTime createdAt)
-    {
-        var elapsed = DateTime.Now - createdAt;
-
-        return elapsed.TotalHours >= 1
-            ? $"{(int)elapsed.TotalHours} giờ {elapsed.Minutes} phút"
-            : $"{elapsed.Minutes} phút {elapsed.Seconds} giây";
     }
 }

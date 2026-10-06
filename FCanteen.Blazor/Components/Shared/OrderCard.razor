@@ -1,0 +1,127 @@
+﻿@using FCanteen.Data
+@using FCanteen.Data.Entities
+
+<div class="card mb-3 @(IsOverdue
+                           ? "border-danger bg-danger-subtle"
+                           : "")">
+
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between
+            align-items-center mb-2">
+
+            <h5 class="mb-0">
+                Đơn #@Order.OrderTicketId
+            </h5>
+
+            <StatusBadge Status="@Order.Status" />
+        </div>
+
+        <div>
+            <strong>Quầy:</strong>
+            @Order.CounterName
+        </div>
+
+        <div>
+            <strong>Thời gian chờ:</strong>
+
+            <ElapsedTimer CreatedAt="@Order.CreatedAt" />
+        </div>
+
+        <hr />
+
+        <strong>Món:</strong>
+
+        <ul class="mb-2">
+
+            @foreach (var line in Order.TicketLines)
+            {
+                <li>
+                    @line.MenuItem.Name
+                    x @line.Quantity
+
+                    @if (!string.IsNullOrWhiteSpace(
+                        line.Note))
+                    {
+                        <span class="text-muted">
+                            — @line.Note
+                        </span>
+                    }
+                </li>
+            }
+
+        </ul>
+
+        @if (IsOverdue)
+        {
+            <div class="text-danger fw-bold mb-2">
+                ⚠ Đơn đã chờ quá 10 phút
+            </div>
+        }
+
+        @if (ActionText is not null)
+        {
+            <button class="@ActionCssClass"
+                    @onclick="NotifyStatusChangedAsync">
+
+                @ActionText
+
+            </button>
+        }
+
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public OrderTicket Order { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback<int> OnStatusChanged
+    {
+        get;
+        set;
+    }
+
+    private bool IsOverdue =>
+        DateTime.Now - Order.CreatedAt >
+        TimeSpan.FromMinutes(10);
+
+    private string? ActionText =>
+        Order.Status switch
+        {
+            OrderStatuses.Waiting =>
+                "Bắt đầu chế biến",
+
+            OrderStatuses.Preparing =>
+                "Đánh dấu sẵn sàng",
+
+            OrderStatuses.Ready =>
+                "Đã giao",
+
+            _ =>
+                null
+        };
+
+    private string ActionCssClass =>
+        Order.Status switch
+        {
+            OrderStatuses.Waiting =>
+                "btn btn-primary mt-2",
+
+            OrderStatuses.Preparing =>
+                "btn btn-warning mt-2",
+
+            OrderStatuses.Ready =>
+                "btn btn-success mt-2",
+
+            _ =>
+                "btn btn-secondary mt-2"
+        };
+
+    private async Task NotifyStatusChangedAsync()
+    {
+        await OnStatusChanged.InvokeAsync(
+            Order.OrderTicketId);
+    }
+}

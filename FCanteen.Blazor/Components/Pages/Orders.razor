@@ -1,0 +1,114 @@
+﻿@page "/orders"
+@rendermode InteractiveServer
+
+@using FCanteen.Data
+@using FCanteen.Data.Entities
+@using FCanteen.Blazor.Services
+@using Microsoft.EntityFrameworkCore
+
+@inject IDbContextFactory<FCanteenContext> DbFactory
+@inject OrderStatusService OrderStatusService
+
+<PageTitle>Orders</PageTitle>
+
+<h1>Theo dõi đơn hàng</h1>
+
+<p class="text-muted">
+    Danh sách tất cả đơn trong hệ thống.
+</p>
+
+@if (orders.Count == 0)
+{
+    <div class="alert alert-info">
+        Chưa có đơn hàng.
+    </div>
+}
+else
+{
+    <div class="row g-3">
+
+        @foreach (var order in orders)
+        {
+            <div class="col-md-4">
+
+                <OrderCard
+                    Order="@order"
+                    OnStatusChanged="HandleStatusChangedAsync" />
+
+            </div>
+        }
+
+    </div>
+}
+
+@code {
+    private List<OrderTicket> orders = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrdersAsync();
+    }
+
+    private async Task LoadOrdersAsync()
+    {
+        await using var db =
+            await DbFactory.CreateDbContextAsync();
+
+        orders =
+            await db.OrderTickets
+                .AsNoTracking()
+                .Include(x => x.TicketLines)
+                    .ThenInclude(x => x.MenuItem)
+                .OrderByDescending(
+                    x => x.CreatedAt)
+                .ToListAsync();
+    }
+
+    private async Task HandleStatusChangedAsync(
+        int orderId)
+    {
+        var order =
+            orders.FirstOrDefault(
+                x =>
+                    x.OrderTicketId ==
+                    orderId);
+
+        if (order is null)
+        {
+            return;
+        }
+
+        string? newStatus =
+            order.Status switch
+            {
+                OrderStatuses.Waiting =>
+                    OrderStatuses.Preparing,
+
+                OrderStatuses.Preparing =>
+                    OrderStatuses.Ready,
+
+                OrderStatuses.Ready =>
+                    OrderStatuses.Delivered,
+
+                _ =>
+                    null
+            };
+
+        if (newStatus is null)
+        {
+            return;
+        }
+
+        var changed =
+            await OrderStatusService
+                .ChangeStatusAsync(
+                    orderId,
+                    newStatus,
+                    "Orders");
+
+        if (changed)
+        {
+            await LoadOrdersAsync();
+        }
+    }
+}
