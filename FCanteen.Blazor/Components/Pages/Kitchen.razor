@@ -84,6 +84,7 @@
                     <strong>Đơn #@order.OrderTicketId</strong>
                     <div>Quầy: @order.CounterName</div>
                     <div>@order.CreatedAt.ToString("HH:mm:ss")</div>
+                    <!-- Preparing -->
                     <button class="btn btn-warning mt-2"
                             @onclick="() => ChangeStatusAsync(
                                     order.OrderTicketId,
@@ -105,6 +106,7 @@
                     <strong>Đơn #@order.OrderTicketId</strong>
                     <div>Quầy: @order.CounterName</div>
                     <div>@order.CreatedAt.ToString("HH:mm:ss")</div>
+                    <!-- Ready -->
                     <button class="btn btn-success mt-2"
                             @onclick="() => ChangeStatusAsync(
                                     order.OrderTicketId,
