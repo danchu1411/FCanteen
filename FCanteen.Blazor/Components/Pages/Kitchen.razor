@@ -1,0 +1,105 @@
+﻿@page "/kitchen"
+@rendermode InteractiveServer
+
+@using FCanteen.Data
+@using FCanteen.Data.Entities
+@using Microsoft.EntityFrameworkCore
+
+@inject IDbContextFactory<FCanteenContext> DbFactory
+
+<PageTitle>Kitchen</PageTitle>
+
+<h1>Màn hình bếp</h1>
+
+<div class="row g-3">
+
+    <div class="col-md-4">
+        <h3>Chờ tiếp nhận (@waitingOrders.Count)</h3>
+
+        @foreach (var order in waitingOrders)
+        {
+            <div class="card mb-3">
+                <div class="card-body">
+                    <strong>Đơn #@order.OrderTicketId</strong>
+                    <div>Quầy: @order.CounterName</div>
+                    <div>@order.CreatedAt.ToString("HH:mm:ss")</div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="col-md-4">
+        <h3>Đang chế biến (@preparingOrders.Count)</h3>
+
+        @foreach (var order in preparingOrders)
+        {
+            <div class="card mb-3">
+                <div class="card-body">
+                    <strong>Đơn #@order.OrderTicketId</strong>
+                    <div>Quầy: @order.CounterName</div>
+                    <div>@order.CreatedAt.ToString("HH:mm:ss")</div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="col-md-4">
+        <h3>Sẵn sàng (@readyOrders.Count)</h3>
+
+        @foreach (var order in readyOrders)
+        {
+            <div class="card mb-3">
+                <div class="card-body">
+                    <strong>Đơn #@order.OrderTicketId</strong>
+                    <div>Quầy: @order.CounterName</div>
+                    <div>@order.CreatedAt.ToString("HH:mm:ss")</div>
+                </div>
+            </div>
+        }
+    </div>
+
+</div>
+
+@code {
+    private List<OrderTicket> waitingOrders = [];
+    private List<OrderTicket> preparingOrders = [];
+    private List<OrderTicket> readyOrders = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrdersAsync();
+    }
+
+    private async Task LoadOrdersAsync()
+    {
+        await using var db =
+            await DbFactory.CreateDbContextAsync();
+
+        var orders =
+            await db.OrderTickets
+                .AsNoTracking()
+                .Include(x => x.TicketLines)
+                    .ThenInclude(x => x.MenuItem)
+                .Where(x =>
+                    x.Status == OrderStatuses.Waiting ||
+                    x.Status == OrderStatuses.Preparing ||
+                    x.Status == OrderStatuses.Ready)
+                .OrderBy(x => x.CreatedAt)
+                .ToListAsync();
+
+        waitingOrders =
+            orders
+                .Where(x => x.Status == OrderStatuses.Waiting)
+                .ToList();
+
+        preparingOrders =
+            orders
+                .Where(x => x.Status == OrderStatuses.Preparing)
+                .ToList();
+
+        readyOrders =
+            orders
+                .Where(x => x.Status == OrderStatuses.Ready)
+                .ToList();
+    }
+}
