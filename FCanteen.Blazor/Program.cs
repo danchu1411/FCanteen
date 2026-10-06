@@ -1,6 +1,7 @@
 using FCanteen.Blazor.Components;
 using FCanteen.Data;
 using Microsoft.EntityFrameworkCore;
+using FCanteen.Blazor.Services;
 
 namespace FCanteen.Blazor
 {
@@ -18,6 +19,8 @@ namespace FCanteen.Blazor
             builder.Services.AddDbContextFactory<FCanteenContext>(
                 options =>
                     options.UseSqlServer(connectionString));
+
+            builder.Services.AddScoped<OrderStatusService>();
 
             // Add services to the container.
             builder.Services.AddRazorComponents()
